@@ -1,14 +1,21 @@
 
 import express, { Application, Request, Response } from 'express';
 import bodyParser from 'body-parser';
-// import cors from 'cors';
+import cors from 'cors';
 import { connectdb } from './database/mongodb';
 import { PORT } from './config';
 import authRoutes from './routes/auth.route';
-import cors from 'cors';
 
 const app: Application = express();
 
+let corsOptions = {
+    origin:["http://localhost:3000", "http://localhost:3003"],
+    // list of domains allowed to access the server
+    // frontend domain/url
+}
+
+// origin: "*", allow all domians
+app.use(cors(corsOptions));
 
 // app.use(cors());
 app.use(bodyParser.json());
