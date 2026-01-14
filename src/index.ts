@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import { connectdb } from './database/mongodb';
 import { PORT } from './config';
 import authRoutes from './routes/auth.route';
+import cors from 'cors';
 
 const app: Application = express();
 
