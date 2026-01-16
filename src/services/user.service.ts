@@ -14,11 +14,15 @@ export class UserService {
         if(emailCheck){
             throw new HttpError(403, "Email is already in use");
         }
-        const FullNameCheck = await userRepository.getUserByFullName(data.FullName);
-        if(FullNameCheck){
+        const firstNameCheck = await userRepository.getUserByFullName(data.firstName);
+        if(firstNameCheck){
             throw new HttpError(403,"Please enter a proper name");
         }
-        const hashedPassword = await bcryptjs.hash(data.password, 10) // chosing the copmplexity
+         const lastNameCheck = await userRepository.getUserByFullName(data.lastName);
+        if(lastNameCheck){
+            throw new HttpError(403,"Please enter a proper name");
+        }
+        const hashedPassword = await bcryptjs.hash(data.password, 10)
         data.password = hashedPassword;
 
         const newUser = await userRepository.createUser(data);
@@ -37,7 +41,8 @@ export class UserService {
         const payload = {
             id: user._id,
             email:user.email,
-            FullName:user.FullName,
+            firstName:user.firstName,
+            lastName:user.lastName,
             role: user.role,
             phone:user.phone
         }
