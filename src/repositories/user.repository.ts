@@ -6,8 +6,8 @@ export class UserRepository {
 		const user = await UserModel.create({
 			email: data.email,
 			password: data.password,
-			firstName: data.firstName,
-			lastName: data.lastName,
+			Firstname: data.Firstname,
+			Lastname: data.Lastname,
 			phone: data.phone,
 		});
 		return user;
@@ -25,7 +25,7 @@ export class UserRepository {
 		return UserModel.findById(id).exec();
 	}
 
-	async updateUserById(id: string, updates: Partial<Pick<IUser, "email" | "password" | "firstName" | "lastName" | "phone" | "role">>): Promise<IUser | null> {
+	async updateUserById(id: string, updates: Partial<Pick<IUser, "email" | "password" | "Firstname" | "Lastname" | "phone" | "role">>): Promise<IUser | null> {
 		return UserModel.findByIdAndUpdate(id, updates, { new: true }).exec();
 	}
 

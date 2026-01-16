@@ -14,11 +14,11 @@ export class UserService {
         if(emailCheck){
             throw new HttpError(403, "Email is already in use");
         }
-        const firstNameCheck = await userRepository.getUserByFullName(data.firstName);
+        const firstNameCheck = await userRepository.getUserByFullName(data.Firstname);
         if(firstNameCheck){
             throw new HttpError(403,"Please enter a proper name");
         }
-         const lastNameCheck = await userRepository.getUserByFullName(data.lastName);
+         const lastNameCheck = await userRepository.getUserByFullName(data.Lastname);
         if(lastNameCheck){
             throw new HttpError(403,"Please enter a proper name");
         }
@@ -41,8 +41,8 @@ export class UserService {
         const payload = {
             id: user._id,
             email:user.email,
-            firstName:user.firstName,
-            lastName:user.lastName,
+            Firstname:user.Firstname,
+            Lastname:user.Lastname,
             role: user.role,
             phone:user.phone
         }
