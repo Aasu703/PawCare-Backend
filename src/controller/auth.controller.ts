@@ -14,6 +14,7 @@ export class AuthController {
                     { success: false, message: z.prettifyError(parsedData.error) }
                 )
             }
+            console.log(parsedData)
             const userData: CreateUserDTO = parsedData.data;
             const newUser = await userService.createUser(userData);
             return res.status(201).json(

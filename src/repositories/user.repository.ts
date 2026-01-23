@@ -9,6 +9,7 @@ export class UserRepository {
 			Firstname: data.Firstname,
 			Lastname: data.Lastname,
 			phone: data.phone,
+			role: data.role
 		});
 		return user;
 	}
