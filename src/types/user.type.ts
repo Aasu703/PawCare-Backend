@@ -7,6 +7,7 @@ export const UserSchema = z.object({
     password: z.string().min(8),
     phone: z.string().min(10).optional(),
     role: z.enum(["user", "admin", "provider"]).default("user"),
+    imageUrl: z.string().optional() // for image URL storage
 
 });
 

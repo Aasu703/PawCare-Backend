@@ -1,10 +1,11 @@
-
 import express, { Application, Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import { connectdb } from './database/mongodb';
 import { PORT } from './config';
 import authRoutes from './routes/auth.route';
+import providerRouter from "./routes/provider.route";
+import path from 'path';
 
 const app: Application = express();
 
@@ -16,6 +17,8 @@ let corsOptions = {
 
 // origin: "*", allow all domians
 app.use(cors(corsOptions));
+
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); // Serve static files from uploads directory
 
 // app.use(cors());
 app.use(bodyParser.json());
@@ -65,6 +68,8 @@ app.get('/', (req: Request, res: Response) => {
 
 // Auth routes
 app.use('/api/auth', authRoutes);
+// Provider routes
+app.use("/api/provider", providerRouter);
 
 async function startServer() {
     await connectdb();

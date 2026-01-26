@@ -9,6 +9,7 @@ const UserSchema: Schema = new Schema<UserType>(
         Lastname: {type: String, required: true},
         phone: {type: String},
         role: {type: String, enum: ["user", "admin", "provider"], default: "user"},
+        imageUrl: {type: String, required: false} // for image URL storage
     },
     {
         timestamps: true,
