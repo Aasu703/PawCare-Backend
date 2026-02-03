@@ -7,6 +7,9 @@ import authRoutes from './routes/auth.route';
 import providerRouter from "./routes/provider.route";
 import petRouter from "./routes/pet.route";
 import path from 'path';
+import admiUserRoute from './routes/admin/user.route';
+import adminPetRoute from './routes/admin/pet.route';
+import adminProviderRoute from './routes/admin/provider.route';
 
 const app: Application = express();
 
@@ -73,6 +76,13 @@ app.use('/api/auth', authRoutes);
 app.use("/api/provider", providerRouter);
 // Pet routes
 app.use("/api/pet", petRouter);
+// Admin User routes
+app.use("/api/admin/users", admiUserRoute);
+// Admin Pet routes
+app.use("/api/admin/pet", adminPetRoute);
+// Admin Provider routes
+app.use("/api/admin/provider", adminProviderRoute);
+
 
 async function startServer() {
     await connectdb();

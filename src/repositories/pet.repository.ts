@@ -18,6 +18,10 @@ export class PetRepository {
         return PetModel.find({ ownerId }).exec();
     }
 
+    async getAllPets(): Promise<IPet[]> {
+        return PetModel.find({}).exec();
+    }
+
     async updatePetById(petId: string, updates: UpdatePetDto): Promise<IPet | null> {
         return PetModel.findByIdAndUpdate(petId, updates, { new: true }).exec();
     }
