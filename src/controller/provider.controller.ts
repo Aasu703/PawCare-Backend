@@ -14,7 +14,30 @@ export class ProviderController {
                     { success: false, message: z.prettifyError(parsedData.error) }
                 );
             }
-            const providerData: CreateProviderDTO = parsedData.data;
+            const providerData: any = parsedData.data;
+            const newProvider = await providerService.createProvider(providerData);
+            return res.status(201).json(
+                { success: true, message: "Provider Created", data: newProvider }
+            );
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json(
+                { success: false, message: error.message || "Internal Server Error" }
+            );
+        }
+    }
+
+    async createProvider(req: Request, res: Response) {
+        try {
+            const parsedData = CreateProviderDTO.safeParse(req.body);
+            if (!parsedData.success) {
+                return res.status(400).json(
+                    { success: false, message: z.prettifyError(parsedData.error) }
+                );
+            }
+            const providerData: any = parsedData.data;
+            if (req.file) {
+                providerData.imageUrl = `/uploads/${req.file.filename}`;
+            }
             const newProvider = await providerService.createProvider(providerData);
             return res.status(201).json(
                 { success: true, message: "Provider Created", data: newProvider }

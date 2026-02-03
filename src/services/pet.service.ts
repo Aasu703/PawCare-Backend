@@ -33,6 +33,11 @@ export class PetService {
         return petRepository.getPetsByOwnerId(ownerId);
     }
 
+    async getAllPets() {
+        // Admin method - get all pets from all users
+        return petRepository.getAllPets();
+    }
+
     async updatePet(petId: string, ownerId: string, data: UpdatePetDto, role?: string) {
         const existing = await this.getPetById(petId, ownerId, role);
         if (!existing) {

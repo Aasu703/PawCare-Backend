@@ -39,6 +39,16 @@ export class PetController {
         }
     }
 
+    async getAllPets(req: Request, res: Response) {
+        try {
+            // Admin only - get all pets from all users
+            const pets = await petService.getAllPets();
+            return res.status(200).json({ success: true, data: pets });
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
+        }
+    }
+
     async getPetById(req: Request, res: Response) {
         try {
             const ownerId = req.user?._id;
