@@ -99,6 +99,7 @@ export class AuthController {
         if (req.body.Firstname) user.Firstname = req.body.Firstname;
         if (req.body.Lastname) user.Lastname = req.body.Lastname;
         if (req.body.email) user.email = req.body.email;
+        if (req.body.PhoneNumber) user.phone = req.body.PhoneNumber;
 
         // If a new profile image was uploaded
         if (req.file) {
@@ -110,7 +111,7 @@ export class AuthController {
         res.json({
             success: true,
             message: 'Profile updated successfully.',
-            user: user.toObject(),
+            data: user.toObject(),
         });
     } catch (err: any) {
         res.status(500).json({ success: false, message: 'Server error', error: err.message });
