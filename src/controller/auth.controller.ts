@@ -100,6 +100,7 @@ export class AuthController {
         if (req.body.Lastname) user.Lastname = req.body.Lastname;
         if (req.body.email) user.email = req.body.email;
         if (req.body.PhoneNumber) user.phone = req.body.PhoneNumber;
+        if (req.body.phone) user.phone = req.body.phone;
 
         // If a new profile image was uploaded
         if (req.file) {

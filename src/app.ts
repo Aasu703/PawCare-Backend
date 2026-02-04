@@ -5,10 +5,12 @@ import path from 'path';
 import admiUserRoute from './routes/admin/user.route';
 import adminPetRoute from './routes/admin/pet.route';
 import adminProviderRoute from './routes/admin/provider.route';
-import express, { Application, Request, Response } from 'express';
+import express, { Application, Request, Response, NextFunction } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import { de } from 'zod/v4/locales';
+import multer from 'multer';
+import { HttpError } from './errors/http-error';
 
 const app: Application = express();
 
@@ -81,6 +83,35 @@ app.use("/api/admin/users", admiUserRoute);
 app.use("/api/admin/pet", adminPetRoute);
 // Admin Provider routes
 app.use("/api/admin/provider", adminProviderRoute);
+
+// Error handling middleware
+app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
+    if (err instanceof HttpError) {
+        return res.status(err.statusCode || 400).json({
+            success: false,
+            message: err.message || "Bad Request"
+        });
+    }
+
+    if (err instanceof multer.MulterError) {
+        return res.status(400).json({
+            success: false,
+            message: err.message || "File upload error"
+        });
+    }
+
+    if (err instanceof Error) {
+        return res.status(500).json({
+            success: false,
+            message: err.message || "Internal Server Error"
+        });
+    }
+
+    return res.status(500).json({
+        success: false,
+        message: "Internal Server Error"
+    });
+});
 
 
 export default app;
