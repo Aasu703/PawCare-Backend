@@ -5,6 +5,7 @@ import path from 'path';
 import admiUserRoute from './routes/admin/user.route';
 import adminPetRoute from './routes/admin/pet.route';
 import adminProviderRoute from './routes/admin/provider.route';
+import adminStatsRoute from './routes/admin/stats.route';
 import express, { Application, Request, Response, NextFunction } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -83,6 +84,8 @@ app.use("/api/admin/users", admiUserRoute);
 app.use("/api/admin/pet", adminPetRoute);
 // Admin Provider routes
 app.use("/api/admin/provider", adminProviderRoute);
+// Admin Stats routes
+app.use("/api/admin/stats", adminStatsRoute);
 
 // Error handling middleware
 app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
