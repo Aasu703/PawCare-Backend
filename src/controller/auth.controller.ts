@@ -100,6 +100,7 @@ export class AuthController {
         if (req.body.Lastname) user.Lastname = req.body.Lastname;
         if (req.body.email) user.email = req.body.email;
         if (req.body.PhoneNumber) user.phone = req.body.PhoneNumber;
+        if (req.body.phone) user.phone = req.body.phone;
 
         // If a new profile image was uploaded
         if (req.file) {
@@ -116,5 +117,36 @@ export class AuthController {
     } catch (err: any) {
         res.status(500).json({ success: false, message: 'Server error', error: err.message });
     }
+    }
+    async sendResetPasswordEmail(req: Request, res: Response) {
+        try {
+            const email = req.body.email;
+            const user = await userService.sendResetPasswordEmail(email);
+            return res.status(200).json(
+                { success: true,
+                    data: user,
+                    message: "If the email is registered, a reset link has been sent." }
+            );
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json(
+                { success: false, message: error.message || "Internal Server Error" }
+            );
+        }
+    }
+
+    async resetPassword(req: Request, res: Response) {
+        try {
+
+           const token = req.params.token;
+            const { newPassword } = req.body;
+            await userService.resetPassword(token, newPassword);
+            return res.status(200).json(
+                { success: true, message: "Password has been reset successfully." }
+            );
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json(
+                { success: false, message: error.message || "Internal Server Error" }
+            );
+        }
     }
 }

@@ -1,4 +1,5 @@
 import mongoose, {Document, Schema} from "mongoose";
+import { v4 as uuidv4 } from "uuid";
 import { UserType } from "../types/user.type";
 
 const UserSchema: Schema = new Schema<UserType>(
@@ -17,7 +18,17 @@ const UserSchema: Schema = new Schema<UserType>(
     
 );
 
-export interface IUser extends UserType, Document { //extends Document to include mongoose document properties
+UserSchema.virtual('id').get(function(this: IUser) {
+    return this._id.toHexString();
+});
+
+// Ensure virtual fields are serialised
+UserSchema.set('toJSON', {
+    virtuals: true,
+});
+
+export interface IUser extends UserType, Document {
+    id: string;
     _id: mongoose.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;

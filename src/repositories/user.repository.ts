@@ -21,9 +21,17 @@ export class UserRepository {
     async getUserByFullName(fullName: string): Promise<IUser | null> {
         return UserModel.findOne({ fullName }).exec();
     }
-    async getAllUsers(){
-        const users = await UserModel.find();
-        return users;
+    async getAllUsers(page: number = 1, limit: number = 10){
+        const skip = (page - 1) * limit;
+        const users = await UserModel.find().skip(skip).limit(limit);
+        const total = await UserModel.countDocuments();
+        return {
+            users,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        };
     }
 
     async getUserById(id: string): Promise<IUser | null> {
