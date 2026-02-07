@@ -19,19 +19,29 @@ declare global{
 export async function authorizedMiddleware(req:Request,res:Response,next:NextFunction){
 //     //express function can have next function to go next
     try{
-        const authHeader=req.headers.authorization;
-        if(!authHeader || !authHeader.startsWith('Bearer '))//"Bearer <token" 0 -> Bearer 1-> token
-            throw new HttpError(401,'Authorization header missing or malformed');
-        const token=authHeader.split(' ')[1];
-        if(!token)
-            throw new HttpError(401,'Token missing');
-        const decoded=jwt.verify(token,JWT_SECRET) as Record<string,any>;//decoded -> payload
-        if(!decoded || !decoded.id)
-            throw new HttpError(401,'Invalid token');
-        const user= await userRepository.getUserById(decoded.id);//make async if needed
-        if(!user)
-            throw new HttpError(401,'User not found');
-        req.user=user;
+        let token: string | undefined;
+        
+        // Check Authorization header first
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.split(' ')[1];
+        } 
+        // If no Authorization header, check for auth_token cookie
+        else if (req.cookies && req.cookies.auth_token) {
+            token = req.cookies.auth_token;
+        }
+        
+        if (!token) {
+            throw new HttpError(401, 'Authorization header missing or malformed, and no auth token cookie found');
+        }
+        
+        const decoded = jwt.verify(token, JWT_SECRET) as Record<string, any>;//decoded -> payload
+        if (!decoded || !decoded.id)
+            throw new HttpError(401, 'Invalid token');
+        const user = await userRepository.getUserById(decoded.id);//make async if needed
+        if (!user)
+            throw new HttpError(401, 'User not found');
+        req.user = user;
         return next();
     }
     catch(err: Error | any){

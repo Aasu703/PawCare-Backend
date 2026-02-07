@@ -20,7 +20,7 @@ export class PetService {
         if (!pet) {
             throw new HttpError(404, "Pet not found");
         }
-        if (role !== "admin" && pet.ownerId?.toString() !== ownerId) {
+        if (role !== "admin" && pet.ownerId?.toString() !== ownerId?.toString()) {
             throw new HttpError(403, "Forbidden");
         }
         return pet;

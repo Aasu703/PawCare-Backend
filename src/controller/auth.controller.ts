@@ -39,8 +39,17 @@ export class AuthController {
             }
             const loginData: LoginUserDTO = parsedData.data;
             const { token, user } = await userService.loginUser(loginData);
+            
+            // Set httpOnly cookie for authentication
+            res.cookie('auth_token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            });
+            
             return res.status(200).json(
-                { success: true, message: "Login successful", data: user, token }
+                { success: true, message: "Login successful", data: user, token: token }
             );
 
         } catch (error: Error | any) {
@@ -142,6 +151,25 @@ export class AuthController {
             await userService.resetPassword(token, newPassword);
             return res.status(200).json(
                 { success: true, message: "Password has been reset successfully." }
+            );
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json(
+                { success: false, message: error.message || "Internal Server Error" }
+            );
+        }
+    }
+
+    async logout(req: Request, res: Response) {
+        try {
+            // Clear the auth_token cookie
+            res.clearCookie('auth_token', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+            });
+            
+            return res.status(200).json(
+                { success: true, message: "Logged out successfully" }
             );
         } catch (error: Error | any) {
             return res.status(error.statusCode ?? 500).json(
