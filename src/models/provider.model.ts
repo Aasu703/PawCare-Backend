@@ -6,6 +6,7 @@ const ProviderSchema: Schema = new Schema(
         businessName: {type: String, required: true},
         address: {type: String, required: true},
         phone: {type: String},
+            userId: { type: String, required: false },
         email: {type: String, required: true, unique: true},
         password: {type: String, required: true},
         rating: {type: Number, default: 0},
@@ -20,8 +21,8 @@ export interface IProvider extends ProviderType, Document { //extends Document t
     _id: mongoose.Types.ObjectId;
     email: string;
     password: string;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export const ProviderModel = mongoose.model<IProvider>("Provider", ProviderSchema);

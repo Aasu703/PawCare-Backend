@@ -1,11 +1,16 @@
 import authRoutes from './routes/auth.route';
 import providerRouter from "./routes/provider.route";
+import providerServiceRoute from './routes/provider/service.route';
 import petRouter from "./routes/pet.route";
 import path from 'path';
 import admiUserRoute from './routes/admin/user.route';
 import adminPetRoute from './routes/admin/pet.route';
 import adminProviderRoute from './routes/admin/provider.route';
 import adminStatsRoute from './routes/admin/stats.route';
+import adminBookingRoute from './routes/admin/booking.route';
+import adminServiceRoute from './routes/admin/service.route';
+import bookingRoute from './routes/booking.route';
+import serviceRoute from './routes/service.route';
 import express, { Application, Request, Response, NextFunction } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -79,6 +84,8 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 // Provider routes
 app.use("/api/provider", providerRouter);
+// Provider-managed services
+app.use('/api/provider/service', providerServiceRoute);
 // User Pet routes
 app.use("/api/user/pet", petRouter);
 // Admin User routes
@@ -89,6 +96,16 @@ app.use("/api/admin/pet", adminPetRoute);
 app.use("/api/admin/provider", adminProviderRoute);
 // Admin Stats routes
 app.use("/api/admin/stats", adminStatsRoute);
+// Admin Booking routes
+app.use('/api/admin/booking', adminBookingRoute);
+// Admin Service routes
+app.use('/api/admin/service', adminServiceRoute);
+
+// Booking routes
+app.use('/api/booking', bookingRoute);
+
+// Public Service routes
+app.use('/api/service', serviceRoute);
 
 // Error handling middleware
 app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {

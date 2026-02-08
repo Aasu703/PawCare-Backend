@@ -30,9 +30,6 @@ UserSchema.set('toJSON', {
 export interface IUser extends UserType, Document {
     id: string;
     _id: mongoose.Types.ObjectId;
-    createdAt: Date;
-    updatedAt: Date;
-
 }
 
 export const UserModel = mongoose.model<IUser>("User", UserSchema);

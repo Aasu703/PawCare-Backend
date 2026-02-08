@@ -32,4 +32,7 @@ export class ProviderRepository {
     async getAllProviders(): Promise<IProvider[]> {
         return ProviderModel.find().exec();
     }
+    async getProviderByUserId(userId: string): Promise<IProvider | null> {
+        return ProviderModel.findOne({ userId }).exec();
+    }
 }
