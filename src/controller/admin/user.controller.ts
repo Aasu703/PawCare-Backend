@@ -1,4 +1,4 @@
-import { CreateUserDTO, UpdateUserDto } from "../../dtos/user.dto";
+import { CreateUserDTO, UpdateUserDto } from "../../dtos/user/user.dto";
 import z from "zod";
 import { Request, Response } from "express";
 import { AdminUserService } from "../../services/admin/user.service";

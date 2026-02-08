@@ -1,4 +1,4 @@
-import { CreateBookingDto, UpdateBookingDto } from "../dtos/booking.dto";
+import { CreateBookingDto, UpdateBookingDto } from "../dtos/user/booking.dto";
 import { BookingRepository } from "../repositories/booking.repository";
 import { HttpError } from "../errors/http-error";
 

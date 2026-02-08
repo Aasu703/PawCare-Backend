@@ -1,5 +1,5 @@
 import { UserModel, IUser } from "../models/user.model";
-import { CreateUserDTO } from "../dtos/user.dto";
+import { CreateUserDTO } from "../dtos/user/user.dto";
 
 export class UserRepository {
     async createUser(data: CreateUserDTO): Promise<IUser> {

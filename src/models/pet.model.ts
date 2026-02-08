@@ -9,6 +9,8 @@ const PetSchema: Schema = new Schema<PetType>(
         age: { type: Number, required: false },
         weight: { type: Number, required: false },
         imageUrl: { type: String, required: false },
+        allergies: { type: String, required: false },
+        dietNotes: { type: String, required: false },
         ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
     },
     {

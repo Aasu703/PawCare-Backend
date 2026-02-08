@@ -1,5 +1,5 @@
 import { UserService } from "../../services/user.service";
-import { CreateUserDTO, LoginUserDTO, UpdateUserDto } from "../../dtos/user.dto";
+import { CreateUserDTO, LoginUserDTO, UpdateUserDto } from "../../dtos/user/user.dto";
 import { Request, Response } from "express";
 import z, { date, success } from "zod";
 import { ca } from "zod/v4/locales";

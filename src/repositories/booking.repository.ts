@@ -1,5 +1,5 @@
 import { BookingModel, IBooking } from "../models/booking.model";
-import { CreateBookingDto, UpdateBookingDto } from "../dtos/booking.dto";
+import { CreateBookingDto, UpdateBookingDto } from "../dtos/user/booking.dto";
 
 export class BookingRepository {
     async createBooking(data: CreateBookingDto, userId: string): Promise<IBooking> {

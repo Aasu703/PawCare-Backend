@@ -1,6 +1,7 @@
 import authRoutes from './routes/auth.route';
 import providerRouter from "./routes/provider.route";
 import providerServiceRoute from './routes/provider/service.route';
+import providerInventoryRoute from './routes/provider/inventory.route';
 import petRouter from "./routes/pet.route";
 import path from 'path';
 import admiUserRoute from './routes/admin/user.route';
@@ -9,8 +10,18 @@ import adminProviderRoute from './routes/admin/provider.route';
 import adminStatsRoute from './routes/admin/stats.route';
 import adminBookingRoute from './routes/admin/booking.route';
 import adminServiceRoute from './routes/admin/service.route';
+import adminReviewRoute from './routes/admin/review.route';
+import adminMessageRoute from './routes/admin/message.route';
+import adminHealthRecordRoute from './routes/admin/healthrecord.route';
+import adminFeedbackRoute from './routes/admin/feedback.route';
+import adminInventoryRoute from './routes/admin/inventory.route';
 import bookingRoute from './routes/booking.route';
 import serviceRoute from './routes/service.route';
+import reviewRoute from './routes/review.route';
+import messageRoute from './routes/message.route';
+import healthRecordRoute from './routes/healthrecord.route';
+import attachmentRoute from './routes/attachment.route';
+import feedbackRoute from './routes/feedback.route';
 import express, { Application, Request, Response, NextFunction } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -100,12 +111,35 @@ app.use("/api/admin/stats", adminStatsRoute);
 app.use('/api/admin/booking', adminBookingRoute);
 // Admin Service routes
 app.use('/api/admin/service', adminServiceRoute);
+// Admin Review routes
+app.use('/api/admin/review', adminReviewRoute);
+// Admin Message routes
+app.use('/api/admin/message', adminMessageRoute);
+// Admin Health Record routes
+app.use('/api/admin/health-record', adminHealthRecordRoute);
+// Admin Feedback routes
+app.use('/api/admin/feedback', adminFeedbackRoute);
+// Admin Inventory routes
+app.use('/api/admin/inventory', adminInventoryRoute);
 
 // Booking routes
 app.use('/api/booking', bookingRoute);
 
 // Public Service routes
 app.use('/api/service', serviceRoute);
+
+// Review routes
+app.use('/api/review', reviewRoute);
+// Message routes
+app.use('/api/message', messageRoute);
+// Health Record routes
+app.use('/api/health-record', healthRecordRoute);
+// Attachment routes
+app.use('/api/attachment', attachmentRoute);
+// Feedback routes
+app.use('/api/feedback', feedbackRoute);
+// Provider Inventory routes
+app.use('/api/provider/inventory', providerInventoryRoute);
 
 // Error handling middleware
 app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
