@@ -10,4 +10,4 @@ export const InventorySchema = z.object({
     providerId: z.string().optional()
 })
 
-export type InventoryType = z.infer<typeof InventorySchema>;
+export type InventoryType = z.infer<typeof InventorySchema>;    

@@ -8,6 +8,9 @@ export const PetSchema = z.object({
     weight: z.coerce.number().nonnegative().optional(),
     imageUrl: z.string().optional(),
     ownerId: z.string().optional()
+    ,
+    allergies: z.string().optional(),
+    dietNotes: z.string().optional()
 });
 
 export type PetType = z.infer<typeof PetSchema>;
