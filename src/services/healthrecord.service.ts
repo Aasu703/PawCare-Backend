@@ -1,4 +1,4 @@
-import { CreateHealthRecordDto, UpdateHealthRecordDto } from "../dtos/healthrecord.dto";
+import { CreateHealthRecordDto, UpdateHealthRecordDto } from "../dtos/pet/healthrecord.dto";
 import { HttpError } from "../errors/http-error";
 import { HealthRecordRepository } from "../repositories/healthrecord.repository";
 import { PetRepository } from "../repositories/pet.repository";

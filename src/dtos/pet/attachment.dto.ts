@@ -1,5 +1,5 @@
 import z from "zod";
-import { AttachmentSchema } from "../types/attachment.type";
+import { AttachmentSchema } from "../../types/attachment.type";
 
 export const CreateAttachmentDto = AttachmentSchema.pick({
     fileName: true,

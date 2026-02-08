@@ -1,5 +1,5 @@
 import z from "zod";
-import { PetSchema } from "../types/pet.type";
+import { PetSchema } from "../../types/pet.type";
 
 export const CreatePetDto = PetSchema.pick({
     name: true,

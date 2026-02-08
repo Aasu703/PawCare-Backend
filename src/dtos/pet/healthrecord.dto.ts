@@ -1,5 +1,5 @@
 import z from "zod";
-import { HealthRecordSchema } from "../types/healthrecord.type";
+import { HealthRecordSchema } from "../../types/healthrecord.type";
 
 export const CreateHealthRecordDto = HealthRecordSchema.pick({
     recordType: true,

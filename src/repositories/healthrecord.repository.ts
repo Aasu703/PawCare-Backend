@@ -1,5 +1,5 @@
 import { HealthRecordModel, IHealthRecord } from "../models/healthrecord.model";
-import { CreateHealthRecordDto, UpdateHealthRecordDto } from "../dtos/healthrecord.dto";
+import { CreateHealthRecordDto, UpdateHealthRecordDto } from "../dtos/pet/healthrecord.dto";
 
 export class HealthRecordRepository {
     async createHealthRecord(data: CreateHealthRecordDto): Promise<IHealthRecord> {

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { AttachmentService } from "../../services/attachment.service";
-import { CreateAttachmentDto, UpdateAttachmentDto } from "../../dtos/attachment.dto";
+import { CreateAttachmentDto, UpdateAttachmentDto } from "../../dtos/pet/attachment.dto";
 import z from "zod";
 
 const attachmentService = new AttachmentService();

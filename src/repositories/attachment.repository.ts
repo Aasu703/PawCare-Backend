@@ -1,5 +1,5 @@
 import { AttachmentModel, IAttachment } from "../models/attachment.model";
-import { CreateAttachmentDto, UpdateAttachmentDto } from "../dtos/attachment.dto";
+import { CreateAttachmentDto, UpdateAttachmentDto } from "../dtos/pet/attachment.dto";
 
 export class AttachmentRepository {
     async createAttachment(data: CreateAttachmentDto): Promise<IAttachment> {

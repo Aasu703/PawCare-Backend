@@ -1,4 +1,4 @@
-import { CreateAttachmentDto, UpdateAttachmentDto } from "../dtos/attachment.dto";
+import { CreateAttachmentDto, UpdateAttachmentDto } from "../dtos/pet/attachment.dto";
 import { HttpError } from "../errors/http-error";
 import { AttachmentRepository } from "../repositories/attachment.repository";
 import { HealthRecordRepository } from "../repositories/healthrecord.repository";
