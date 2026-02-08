@@ -9,6 +9,7 @@ import adminStatsRoute from './routes/admin/stats.route';
 import adminBookingRoute from './routes/admin/booking.route';
 import adminServiceRoute from './routes/admin/service.route';
 import bookingRoute from './routes/booking.route';
+import serviceRoute from './routes/service.route';
 import express, { Application, Request, Response, NextFunction } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -99,6 +100,9 @@ app.use('/api/admin/service', adminServiceRoute);
 
 // Booking routes
 app.use('/api/booking', bookingRoute);
+
+// Public Service routes
+app.use('/api/service', serviceRoute);
 
 // Error handling middleware
 app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
