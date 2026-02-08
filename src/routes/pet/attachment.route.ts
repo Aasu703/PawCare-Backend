@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
-import attachmentController from "../controller/pet/attachment.controller";
-import { authorizedMiddleware } from "../middleware/authorization.middleware";
+import attachmentController from "../../controller/pet/attachment.controller";
+import { authorizedMiddleware } from "../../middleware/authorization.middleware";
 
 const router: Router = Router();
 

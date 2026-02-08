@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
-import messageController from "../controller/user/message.controller";
-import { authorizedMiddleware } from "../middleware/authorization.middleware";
+import messageController from "../../controller/user/message.controller";
+import { authorizedMiddleware } from "../../middleware/authorization.middleware";
 
 const router: Router = Router();
 

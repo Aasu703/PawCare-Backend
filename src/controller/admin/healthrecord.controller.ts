@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { HealthRecordService } from "../../services/healthrecord.service";
+import { HealthRecordService } from "../../services/pet/healthrecord.service";
 
 const healthRecordService = new HealthRecordService();
 

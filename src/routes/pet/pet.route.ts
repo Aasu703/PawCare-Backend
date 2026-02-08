@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { PetController } from "../controller/pet/pet.controller";
-import { authorizedMiddleware } from "../middleware/authorization.middleware";
-import { uploads } from "../middleware/upload.middleware";
+import { PetController } from "../../controller/pet/pet.controller";
+import { authorizedMiddleware } from "../../middleware/authorization.middleware";
+import { uploads } from "../../middleware/upload.middleware";
 
 const router = Router();
 const petController = new PetController();

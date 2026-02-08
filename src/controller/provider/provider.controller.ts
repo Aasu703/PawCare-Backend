@@ -1,4 +1,4 @@
-import { ProviderService } from "../../services/provider.service";
+import { ProviderService } from "../../services/provider/provider.service";
 import { CreateProviderDTO, LoginProviderDTO } from "../../dtos/provider/provider.dto";
 import { Request, Response } from "express";
 import z from "zod";

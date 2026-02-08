@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { AttachmentService } from "../../services/attachment.service";
+import { AttachmentService } from "../../services/pet/attachment.service";
 import { CreateAttachmentDto, UpdateAttachmentDto } from "../../dtos/pet/attachment.dto";
 import z from "zod";
 

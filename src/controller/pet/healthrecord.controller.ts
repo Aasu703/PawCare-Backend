@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { HealthRecordService } from "../../services/healthrecord.service";
+import { HealthRecordService } from "../../services/pet/healthrecord.service";
 import { CreateHealthRecordDto, UpdateHealthRecordDto } from "../../dtos/pet/healthrecord.dto";
 import z from "zod";
 

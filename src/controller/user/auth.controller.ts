@@ -1,9 +1,9 @@
-import { UserService } from "../../services/user.service";
+import { UserService } from "../../services/user/user.service";
 import { CreateUserDTO, LoginUserDTO, UpdateUserDto } from "../../dtos/user/user.dto";
 import { Request, Response } from "express";
 import z, { date, success } from "zod";
 import { ca } from "zod/v4/locales";
-import { UserModel } from "../../models/user.model";
+import { UserModel } from "../../models/user/user.model";
 
 
 let userService = new UserService();

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
-import healthRecordController from "../controller/pet/healthrecord.controller";
-import { authorizedMiddleware } from "../middleware/authorization.middleware";
+import healthRecordController from "../../controller/pet/healthrecord.controller";
+import { authorizedMiddleware } from "../../middleware/authorization.middleware";
 
 const router: Router = Router();
 

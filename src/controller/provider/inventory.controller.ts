@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { InventoryService } from "../../services/inventory.service";
+import { InventoryService } from "../../services/provider/inventory.service";
 import { CreateInventoryDto, UpdateInventoryDto } from "../../dtos/provider/inventory.dto";
 import z from "zod";
 

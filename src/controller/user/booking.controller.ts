@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { BookingService } from "../services/booking.service";
+import { BookingService } from "../../services/user/booking.service";
 
 const bookingService = new BookingService();
 

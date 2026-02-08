@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { FeedbackService } from "../../services/feedback.service";
+import { FeedbackService } from "../../services/provider/feedback.service";
 import { CreateFeedbackDto, UpdateFeedbackDto } from "../../dtos/provider/feedback.dto";
 import z from "zod";
 
