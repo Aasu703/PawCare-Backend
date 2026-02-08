@@ -20,8 +20,8 @@ export interface IProvider extends ProviderType, Document { //extends Document t
     _id: mongoose.Types.ObjectId;
     email: string;
     password: string;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export const ProviderModel = mongoose.model<IProvider>("Provider", ProviderSchema);

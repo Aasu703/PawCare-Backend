@@ -35,7 +35,6 @@ export class BookingRepository {
     async deleteBookingById(id: string): Promise<IBooking | null> {
         return BookingModel.findByIdAndDelete(id).exec();
     }
-
     async getBookingsByUserId(userId: string, page: number = 1, limit: number = 10) {
         const skip = (page - 1) * limit;
         const bookings = await BookingModel.find({ userId }).sort({ startTime: -1 }).skip(skip).limit(limit).exec();
@@ -45,5 +44,5 @@ export class BookingRepository {
     async countBookingsByUserId(userId: string) {
         return BookingModel.countDocuments({ userId }).exec();
     }
-
+    
 }
