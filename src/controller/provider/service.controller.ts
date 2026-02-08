@@ -30,8 +30,12 @@ class ProviderServiceController {
       const provider = await providerRepo.getProviderByUserId(user.id || user._id?.toString());
       if (!provider) return res.status(404).json({ message: 'Provider profile not found for this user' });
 
-      // Ensure the service belongs to this provider before update (simple check in service layer could be added)
-      const updated = await ServiceService.updateService(req.params.id, req.body);
+      // Use provider-scoped update to enforce ownership
+      const updated = await ServiceService.updateServiceForProvider(
+        provider._id.toString(),
+        req.params.id,
+        req.body
+      );
       return res.json(updated);
     } catch (err: any) {
       return res.status(err.status || 500).json({ success: false, message: err.message });
@@ -46,7 +50,7 @@ class ProviderServiceController {
       const provider = await providerRepo.getProviderByUserId(user.id || user._id?.toString());
       if (!provider) return res.status(404).json({ message: 'Provider profile not found for this user' });
 
-      const deleted = await ServiceService.deleteService(req.params.id);
+      const deleted = await ServiceService.deleteServiceForProvider(provider._id.toString(), req.params.id);
       return res.json({ success: true, deleted });
     } catch (err: any) {
       return res.status(err.status || 500).json({ success: false, message: err.message });
