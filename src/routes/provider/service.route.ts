@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { ProviderServiceController } from "../../controller/provider/service.controller";
-import { authorizedMiddleware } from "../../middleware/authorization.middleware";
+import { authorizedMiddleware, providerMiddleware } from "../../middleware/authorization.middleware";
 
 const controller = new ProviderServiceController();
 const router = Router();
 
-router.use(authorizedMiddleware);
+router.use(authorizedMiddleware, providerMiddleware);
 
 router.post("/", controller.create);
 router.get("/", controller.list);

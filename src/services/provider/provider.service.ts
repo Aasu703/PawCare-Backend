@@ -36,7 +36,7 @@ export class ProviderService {
             id: provider._id,
             email: provider.email,
             businessName: provider.businessName,
-            role: "provider",
+            role: provider.role || "provider",
         };
 
         const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "30d" });
