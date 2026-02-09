@@ -7,6 +7,7 @@ export const ProviderSchema = z.object({
     rating: z.number().min(0).max(5).optional(),
     userId: z.string().optional(),
     userId2: z.string().optional(),
+    role: z.enum(["provider"]).default("provider"),
     avatarUrl: z.string().optional(),
     createdAt: z.string().optional()
 });

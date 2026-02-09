@@ -10,6 +10,7 @@ const ProviderSchema: Schema = new Schema(
         email: {type: String, required: true, unique: true},
         password: {type: String, required: true},
         rating: {type: Number, default: 0},
+        role: {type: String, enum: ["provider"], default: "provider"},
 
     },
     {
@@ -21,6 +22,7 @@ export interface IProvider extends ProviderType, Document { //extends Document t
     _id: mongoose.Types.ObjectId;
     email: string;
     password: string;
+    role: "provider";
     createdAt?: string;
     updatedAt?: string;
 }
