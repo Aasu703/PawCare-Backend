@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { HealthRecordService } from "../../services/healthrecord.service";
-import { CreateHealthRecordDto, UpdateHealthRecordDto } from "../../dtos/healthrecord.dto";
+import { HealthRecordService } from "../../services/pet/healthrecord.service";
+import { CreateHealthRecordDto, UpdateHealthRecordDto } from "../../dtos/pet/healthrecord.dto";
 import z from "zod";
 
 const healthRecordService = new HealthRecordService();

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { InventoryService } from "../../services/inventory.service";
-import { CreateInventoryDto, UpdateInventoryDto } from "../../dtos/inventory.dto";
+import { InventoryService } from "../../services/provider/inventory.service";
+import { CreateInventoryDto, UpdateInventoryDto } from "../../dtos/provider/inventory.dto";
 import z from "zod";
 
 const inventoryService = new InventoryService();

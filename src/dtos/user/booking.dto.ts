@@ -1,5 +1,5 @@
 import z from "zod";
-import { BookingSchema } from "../../types/booking.type";
+import { BookingSchema } from "../../types/user/booking.type";
 
 export const CreateBookingDto = BookingSchema.pick({
 	startTime: true,

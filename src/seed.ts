@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
-import { UserModel } from "./models/user.model";
-import { PetModel } from "./models/pet.model";
-import { ProviderModel } from "./models/provider.model";
+import { UserModel } from "./models/user/user.model";
+import { PetModel } from "./models/pet/pet.model";
+import { ProviderModel } from "./models/provider/provider.model";
 import bcryptjs from "bcryptjs";
 import { MONGO_URI } from "./config";
 

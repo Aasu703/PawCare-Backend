@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { ReviewService } from "../../services/review.service";
+import { ReviewService } from "../../services/user/review.service";
 import { CreateReviewDto, UpdateReviewDto } from "../../dtos/user/review.dto";
 import z from "zod";
 

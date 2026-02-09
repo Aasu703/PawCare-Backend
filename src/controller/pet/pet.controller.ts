@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import z from "zod";
-import { CreatePetDto, UpdatePetDto } from "../../dtos/pet.dto";
-import { PetService } from "../../services/pet.service";
+import { CreatePetDto, UpdatePetDto } from "../../dtos/pet/pet.dto";
+import { PetService } from "../../services/pet/pet.service";
 
 const petService = new PetService();
 

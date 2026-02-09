@@ -1,7 +1,7 @@
-import { UserRepository } from "../../repositories/user.repository";
-import { PetRepository } from "../../repositories/pet.repository";
-import { ProviderRepository } from "../../repositories/provider.repository";
-import { IUser } from "../../models/user.model";
+import { UserRepository } from "../../repositories/user/user.repository";
+import { PetRepository } from "../../repositories/pet/pet.repository";
+import { ProviderRepository } from "../../repositories/provider/provider.repository";
+import { IUser } from "../../models/user/user.model";
 
 export interface DashboardStats {
   totalPets: number;

@@ -1,22 +1,39 @@
 import { Request, Response } from "express";
-import ServiceService from "../../services/service.service";
-import { ProviderRepository } from "../../repositories/provider.repository";
+import ServiceService from "../../services/provider/service.service";
+import { ProviderRepository } from "../../repositories/provider/provider.repository";
 
 const providerRepo = new ProviderRepository();
 
-class ProviderServiceController {
-  // Provider creates a service for their own provider profile
+export class ProviderServiceController {
   async create(req: Request, res: Response) {
     try {
-      const user = (req as any).user;
-      if (!user || user.role !== 'provider') return res.status(403).json({ message: 'Forbidden' });
-
-      const provider = await providerRepo.getProviderByUserId(user.id || user._id?.toString());
-      if (!provider) return res.status(404).json({ message: 'Provider profile not found for this user' });
-
-      const payload = { ...req.body, providerId: provider._id.toString() };
-      const service = await ServiceService.createService(payload as any);
+      const providerId = req.body.providerId;
+      if (!providerId) return res.status(400).json({ message: "providerId is required" });
+      const provider = await providerRepo.getProviderById(providerId);
+      if (!provider) return res.status(404).json({ message: "Provider not found" });
+      const service = await ServiceService.createService(req.body);
       return res.status(201).json(service);
+    } catch (err: any) {
+      return res.status(err.status || 500).json({ success: false, message: err.message });
+    }
+  }
+
+  async list(req: Request, res: Response) {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const result = await ServiceService.getAllServices(page, limit);
+      return res.json(result);
+    } catch (err: any) {
+      return res.status(err.status || 500).json({ success: false, message: err.message });
+    }
+  }
+
+  async getById(req: Request, res: Response) {
+    try {
+      const service = await ServiceService.getServiceById(req.params.id);
+      if (!service) return res.status(404).json({ success: false, message: "Service not found" });
+      return res.json(service);
     } catch (err: any) {
       return res.status(err.status || 500).json({ success: false, message: err.message });
     }
@@ -24,18 +41,7 @@ class ProviderServiceController {
 
   async update(req: Request, res: Response) {
     try {
-      const user = (req as any).user;
-      if (!user || user.role !== 'provider') return res.status(403).json({ message: 'Forbidden' });
-
-      const provider = await providerRepo.getProviderByUserId(user.id || user._id?.toString());
-      if (!provider) return res.status(404).json({ message: 'Provider profile not found for this user' });
-
-      // Use provider-scoped update to enforce ownership
-      const updated = await ServiceService.updateServiceForProvider(
-        provider._id.toString(),
-        req.params.id,
-        req.body
-      );
+      const updated = await ServiceService.updateService(req.params.id, req.body);
       return res.json(updated);
     } catch (err: any) {
       return res.status(err.status || 500).json({ success: false, message: err.message });
@@ -44,13 +50,7 @@ class ProviderServiceController {
 
   async remove(req: Request, res: Response) {
     try {
-      const user = (req as any).user;
-      if (!user || user.role !== 'provider') return res.status(403).json({ message: 'Forbidden' });
-
-      const provider = await providerRepo.getProviderByUserId(user.id || user._id?.toString());
-      if (!provider) return res.status(404).json({ message: 'Provider profile not found for this user' });
-
-      const deleted = await ServiceService.deleteServiceForProvider(provider._id.toString(), req.params.id);
+      const deleted = await ServiceService.deleteService(req.params.id);
       return res.json({ success: true, deleted });
     } catch (err: any) {
       return res.status(err.status || 500).json({ success: false, message: err.message });

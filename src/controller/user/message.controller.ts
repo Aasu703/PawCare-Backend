@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { MessageService } from "../../services/message.service";
-import { CreateMessageDto, UpdateMessageDto } from "../../dtos/message.dto";
+import { MessageService } from "../../services/user/message.service";
+import { CreateMessageDto, UpdateMessageDto } from "../../dtos/user/message.dto";
 import z from "zod";
 
 const messageService = new MessageService();

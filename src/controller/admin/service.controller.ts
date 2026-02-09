@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import ServiceService from "../../services/service.service";
-import { ProviderRepository } from "../../repositories/provider.repository";
+import ServiceService from "../../services/provider/service.service";
+import { ProviderRepository } from "../../repositories/provider/provider.repository";
 
 const providerRepo = new ProviderRepository();
 

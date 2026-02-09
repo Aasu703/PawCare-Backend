@@ -1,6 +1,6 @@
 import request from 'supertest';
 import app from "../../app";
-import { UserModel } from '../../models/user.model';
+import { UserModel } from '../../models/user/user.model';
 
 describe(
     "Auhentication Integration Tests", //name of test suite group

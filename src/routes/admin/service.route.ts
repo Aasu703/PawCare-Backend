@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 import adminServiceController from "../../controller/admin/service.controller";
 import { authorizedMiddleware, adminMiddleware } from "../../middleware/authorization.middleware";
 import { validateBody } from "../../middleware/validate.middleware";
-import { CreateServiceDto, UpdateServiceDto } from "../../dtos/service.dto";
+import { CreateServiceDto, UpdateServiceDto } from "../../dtos/provider/service.dto";
 
 const router: Router = Router();
 
