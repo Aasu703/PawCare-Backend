@@ -1,6 +1,7 @@
 import authRoutes from './routes/user/auth.route';
 import providerRouter from "./routes/provider/provider.route";
 import providerServiceRoute from './routes/provider/service.route';
+import providerServiceApplicationRoute from './routes/provider/provider-service.route';
 import providerInventoryRoute from './routes/provider/inventory.route';
 import petRouter from "./routes/pet/pet.route";
 import path from 'path';
@@ -10,6 +11,7 @@ import adminProviderRoute from './routes/admin/provider.route';
 import adminStatsRoute from './routes/admin/stats.route';
 import adminBookingRoute from './routes/admin/booking.route';
 import adminServiceRoute from './routes/admin/service.route';
+import adminProviderServiceRoute from './routes/admin/provider-service.route';
 import adminReviewRoute from './routes/admin/review.route';
 import adminMessageRoute from './routes/admin/message.route';
 import adminHealthRecordRoute from './routes/admin/healthrecord.route';
@@ -99,10 +101,14 @@ app.get('/', (req: Request, res: Response) => {
 
 // Auth routes
 app.use('/api/auth', authRoutes);
-// Provider routes
-app.use("/api/provider", providerRouter);
+// Provider Inventory routes
+app.use('/api/provider/inventory', providerInventoryRoute);
 // Provider-managed services
 app.use('/api/provider/service', providerServiceRoute);
+// Provider service applications
+app.use('/api/provider/provider-service', providerServiceApplicationRoute);
+// Provider routes
+app.use("/api/provider", providerRouter);
 // User Pet routes
 app.use("/api/user/pet", petRouter);
 // Admin User routes
@@ -117,6 +123,8 @@ app.use("/api/admin/stats", adminStatsRoute);
 app.use('/api/admin/booking', adminBookingRoute);
 // Admin Service routes
 app.use('/api/admin/service', adminServiceRoute);
+// Admin Provider Service routes
+app.use('/api/admin/provider-service', adminProviderServiceRoute);
 // Admin Review routes
 app.use('/api/admin/review', adminReviewRoute);
 // Admin Message routes
@@ -144,8 +152,6 @@ app.use('/api/health-record', healthRecordRoute);
 app.use('/api/attachment', attachmentRoute);
 // Feedback routes
 app.use('/api/feedback', feedbackRoute);
-// Provider Inventory routes
-app.use('/api/provider/inventory', providerInventoryRoute);
 // Order routes (user)
 app.use('/api/order', orderRoute);
 // Admin Order routes

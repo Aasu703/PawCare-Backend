@@ -11,6 +11,7 @@ export const BookingSchema = z.object({
     userId: z.string().optional(),
     petId: z.string().optional(),
     providerId: z.string().optional(),
+    providerServiceId: z.string().optional(),
 })
 
 export type BookingType = z.infer<typeof BookingSchema>;

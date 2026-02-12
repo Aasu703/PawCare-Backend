@@ -56,4 +56,12 @@ export class ReviewRepository {
         ]);
         return result.length > 0 ? Math.round(result[0].avgRating * 10) / 10 : 0;
     }
+
+    async getAverageRatingByProviderServiceId(providerServiceId: string): Promise<number> {
+        const result = await ReviewModel.aggregate([
+            { $match: { providerServiceId } },
+            { $group: { _id: null, avgRating: { $avg: "$rating" } } }
+        ]);
+        return result.length > 0 ? Math.round(result[0].avgRating * 10) / 10 : 0;
+    }
 }

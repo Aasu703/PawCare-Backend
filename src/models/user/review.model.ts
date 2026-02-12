@@ -7,7 +7,9 @@ const ReviewSchema: Schema = new Schema<ReviewType>(
         comment: { type: String, required: false },
         userId: { type: String, required: true },
         providerId: { type: String, required: false },
+        providerServiceId: { type: String, required: false },
         productId: { type: String, required: false },
+        bookingId: { type: String, required: false },
         reviewType: { type: String, enum: ["provider", "product", "general"], default: "general" },
     },
     {

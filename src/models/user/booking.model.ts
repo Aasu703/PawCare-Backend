@@ -11,7 +11,8 @@ const BookingSchema: Schema = new Schema<BookingType>(
         serviceId: {type: String, required: false},
         userId: {type: String, required: false},
         petId: {type: String, required: false},
-        providerId: {type: String, required: false}
+        providerId: {type: String, required: false},
+        providerServiceId: {type: String, required: false}
     },
     {
         timestamps: true,

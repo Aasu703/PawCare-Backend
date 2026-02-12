@@ -1,11 +1,41 @@
 import { CreateBookingDto, UpdateBookingDto } from "../../dtos/user/booking.dto";
 import { BookingRepository } from "../../repositories/user/booking.repository";
 import { HttpError } from "../../errors/http-error";
+import ProviderServiceService from "../provider/provider-service.service";
+import ServiceRepository from "../../repositories/provider/service.repository";
 
 let bookingRepository = new BookingRepository();
+const providerServiceService = new ProviderServiceService();
+const serviceRepository = new ServiceRepository();
 
 export class BookingService {
     async createBooking(data: CreateBookingDto, userId: string){
+        if (data.providerServiceId) {
+            const providerService = await providerServiceService.getProviderServiceById(data.providerServiceId);
+            if (providerService.verificationStatus !== "approved") {
+                throw new HttpError(403, "Provider service is not approved");
+            }
+            if (providerService.serviceType === "shop_owner") {
+                throw new HttpError(400, "shop_owner service is not valid for bookings");
+            }
+            if (!data.serviceId) {
+                throw new HttpError(400, "serviceId is required when providerServiceId is provided");
+            }
+            const service = await serviceRepository.getServiceById(data.serviceId);
+            if (!service) {
+                throw new HttpError(404, "Service not found");
+            }
+            const serviceCategory = (service as any).catergory;
+            const typeToCategory: Record<string, string> = {
+                vet: "vet",
+                groomer: "grooming",
+                boarding: "boarding",
+            };
+            const expectedCategory = typeToCategory[providerService.serviceType];
+            if (serviceCategory && expectedCategory && serviceCategory !== expectedCategory) {
+                throw new HttpError(400, "Service type mismatch");
+            }
+        }
         const newBooking = await bookingRepository.createBooking(data, userId);
         return newBooking;
     
