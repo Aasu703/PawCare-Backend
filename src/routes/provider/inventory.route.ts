@@ -4,6 +4,11 @@ import { authorizedMiddleware, providerMiddleware } from "../../middleware/autho
 
 const router: Router = Router();
 
+// Public: list all inventory items (used by shop)
+router.get("/", (req: Request, res: Response) =>
+    inventoryController.listPublic(req, res)
+);
+
 // Create inventory item
 router.post("/", authorizedMiddleware, providerMiddleware, (req: Request, res: Response) =>
     inventoryController.create(req, res)
