@@ -1,7 +1,8 @@
-import { UserRepository } from "../../repositories/user.repository";
-import { CreateUserDTO, UpdateUserDto } from "../../dtos/user.dto";
+import { UserRepository } from "../../repositories/user/user.repository";
+import { CreateUserDTO, UpdateUserDto } from "../../dtos/user/user.dto";
 import { HttpError } from "../../errors/http-error";
 import bcryptjs from "bcryptjs";
+
 let userRepository = new UserRepository();
 
 export class AdminUserService {
@@ -16,8 +17,8 @@ export class AdminUserService {
         return newUser;
     }
 
-    async getAllUsers() {
-        let users = await userRepository.getAllUsers();
+    async getAllUsers(page: number = 1, limit: number = 10) {
+        let users = await userRepository.getAllUsers(page, limit);
         return users;
     }
     async getUserById(id: string) {

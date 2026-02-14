@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { PetController } from "../../controller/pet.controller";
+import { PetController } from "../../controller/pet/pet.controller";
 import { authorizedMiddleware, adminMiddleware } from "../../middleware/authorization.middleware";
 import { uploads } from "../../middleware/upload.middleware";
 import { Request, Response } from "express";

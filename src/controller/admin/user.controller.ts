@@ -1,4 +1,4 @@
-import { CreateUserDTO, UpdateUserDto } from "../../dtos/user.dto";
+import { CreateUserDTO, UpdateUserDto } from "../../dtos/user/user.dto";
 import z from "zod";
 import { Request, Response } from "express";
 import { AdminUserService } from "../../services/admin/user.service";
@@ -31,7 +31,9 @@ export class AdminUserController {
 
     async getAllUsers(req: Request, res: Response) {
         try {
-            const users = await adminUserService.getAllUsers();
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const users = await adminUserService.getAllUsers(page, limit);
             return res.status(200).json({
                 success: true,
                 message: "Users fetched successfully",

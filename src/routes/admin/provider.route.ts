@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { ProviderController } from "../../controller/provider.controller";
+import { ProviderController } from "../../controller/provider/provider.controller";
 import { authorizedMiddleware, adminMiddleware } from "../../middleware/authorization.middleware";
 import { uploads } from "../../middleware/upload.middleware";
 import { Request, Response } from "express";
