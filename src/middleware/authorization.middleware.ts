@@ -41,6 +41,14 @@ export async function authorizedMiddleware(req:Request,res:Response,next:NextFun
         const decoded = jwt.verify(token, JWT_SECRET) as Record<string, any>;//decoded -> payload
         if (!decoded || !decoded.id)
             throw new HttpError(401, 'Invalid token');
+
+        // Basic validation: ensure decoded.id looks like a Mongo ObjectId when used for DB lookups
+        const objectIdRegex = /^[a-fA-F0-9]{24}$/;
+        if (decoded.role === 'provider' || decoded.role === 'user') {
+            if (typeof decoded.id !== 'string' || !objectIdRegex.test(decoded.id)) {
+                throw new HttpError(401, 'Invalid token payload');
+            }
+        }
         
         // Check if this is a provider token
         if (decoded.role === 'provider') {

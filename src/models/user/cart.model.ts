@@ -7,9 +7,8 @@ const CartItemSchema: Schema = new Schema(
         productName: { type: String, required: true },
         quantity: { type: Number, required: true, min: 0 },
         price: { type: Number, required: true, min: 0 },
-        providerId: { type: String },
-    },
-    { _id: false }
+        providerId: { type: mongoose.Schema.Types.ObjectId, ref: "Provider" },
+    }
 );
 
 const CartSchema: Schema = new Schema(

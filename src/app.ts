@@ -195,7 +195,7 @@ app.use('/api/booking', bookingRoute);
 // Order routes
 app.use('/api/order', orderRoute);
 // Cart routes
-app.use('/api/user/cart', cartRoute);
+app.use('/api/cart', cartRoute);
 // Public Service routes
 app.use('/api/service', serviceRoute);
 // Public post routes

@@ -33,7 +33,7 @@ export class CartRepository {
                     productName: inventory.product_name,
                     quantity: itemData.quantity,
                     price: inventory.price || 0,
-                    providerId: inventory.providerId
+                    providerId: (inventory.providerId as any)?.toString?.() || inventory.providerId
                 }]
             });
         } else {
@@ -49,7 +49,7 @@ export class CartRepository {
                     productName: inventory.product_name,
                     quantity: itemData.quantity,
                     price: inventory.price || 0,
-                    providerId: inventory.providerId
+                    providerId: (inventory.providerId as any)?.toString?.() || inventory.providerId
                 });
             }
         }
