@@ -2,6 +2,7 @@ import { UserRepository } from "../../repositories/user/user.repository";
 import { CreateUserDTO, UpdateUserDto } from "../../dtos/user/user.dto";
 import { HttpError } from "../../errors/http-error";
 import bcryptjs from "bcryptjs";
+
 let userRepository = new UserRepository();
 
 export class AdminUserService {

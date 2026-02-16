@@ -5,7 +5,12 @@ const ReviewSchema: Schema = new Schema<ReviewType>(
     {
         rating: { type: Number, required: true, min: 0, max: 5 },
         comment: { type: String, required: false },
-        userId: { type: String, required: true }
+        userId: { type: String, required: true },
+        providerId: { type: String, required: false },
+        providerServiceId: { type: String, required: false },
+        productId: { type: String, required: false },
+        bookingId: { type: String, required: false },
+        reviewType: { type: String, enum: ["provider", "product", "general"], default: "general" },
     },
     {
         timestamps: true,

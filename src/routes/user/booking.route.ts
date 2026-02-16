@@ -8,8 +8,8 @@ const router = Router();
 router.post("/", authorizedMiddleware, BookingController.create);
 // alias route for clients that use /create
 router.post("/create", authorizedMiddleware, BookingController.create);
-router.get("/", BookingController.list);
-router.get("/:id", BookingController.getById);
+router.get("/", authorizedMiddleware, BookingController.list);
+router.get("/:id", authorizedMiddleware, BookingController.getById);
 router.put("/:id", authorizedMiddleware, BookingController.update);
 router.delete("/:id", authorizedMiddleware, BookingController.remove);
 

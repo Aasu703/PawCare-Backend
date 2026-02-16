@@ -1,16 +1,18 @@
 import mongoose, { Document, Schema } from "mongoose";
 import { FeedbackType } from "../../types/provider/feedback.type";
 
-const FeedbackSchema: Schema = new Schema<FeedbackType>(
+const FeedbackSchema: Schema = new Schema(
     {
         feedback: { type: String, required: true },
-        providerId: { type: String, required: true },
-        userId: { type: String, required: false }
+        providerId: { type: mongoose.Schema.Types.ObjectId, ref: "Provider", required: true, index: true },
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false, index: true }
     },
     {
         timestamps: true,
     }
 );
+
+FeedbackSchema.index({ providerId: 1, createdAt: -1 });
 
 FeedbackSchema.virtual("id").get(function (this: IFeedback) {
     return this._id.toHexString();

@@ -21,7 +21,6 @@ declare global{
 //can use req.user in other files
 
 export async function authorizedMiddleware(req:Request,res:Response,next:NextFunction){
-//     //express function can have next function to go next
     try{
         let token: string | undefined;
         
@@ -36,12 +35,20 @@ export async function authorizedMiddleware(req:Request,res:Response,next:NextFun
         }
         
         if (!token) {
-            throw new HttpError(401, 'Authorization header missing or malformed, and no auth token cookie found');
+            throw new HttpError(401, 'Authorization token missing');
         }
         
         const decoded = jwt.verify(token, JWT_SECRET) as Record<string, any>;//decoded -> payload
         if (!decoded || !decoded.id)
             throw new HttpError(401, 'Invalid token');
+
+        // Basic validation: ensure decoded.id looks like a Mongo ObjectId when used for DB lookups
+        const objectIdRegex = /^[a-fA-F0-9]{24}$/;
+        if (decoded.role === 'provider' || decoded.role === 'user') {
+            if (typeof decoded.id !== 'string' || !objectIdRegex.test(decoded.id)) {
+                throw new HttpError(401, 'Invalid token payload');
+            }
+        }
         
         // Check if this is a provider token
         if (decoded.role === 'provider') {
@@ -60,7 +67,7 @@ export async function authorizedMiddleware(req:Request,res:Response,next:NextFun
         return next();
     }
     catch(err: Error | any){
-        return res.status(401).json({message: err.message || 'Unauthorized'});
+        return next(err instanceof HttpError ? err : new HttpError(401, err.message || 'Unauthorized'));
     }
             
 }   
@@ -75,9 +82,7 @@ export async function adminMiddleware(req:Request,res:Response,next:NextFunction
         return next();
     }
     catch(err: Error | any){
-
-        return res.status(err.status || 500).json(
-            {success:false, message:err.message || 'Unauthorized'});
+        return next(err instanceof HttpError ? err : new HttpError(500, err.message || 'Unauthorized'));
     }
 }
 
@@ -91,7 +96,19 @@ export async function providerMiddleware(req:Request,res:Response,next:NextFunct
         return next();
     }
     catch(err: Error | any){
-        return res.status(err.status || 500).json(
-            {success:false, message:err.message || 'Unauthorized'});
+        return next(err instanceof HttpError ? err : new HttpError(500, err.message || 'Unauthorized'));
     }
+}
+
+export function requireRoles(...roles: Array<'user' | 'provider' | 'admin'>) {
+    return (req: Request, res: Response, next: NextFunction) => {
+        const role = (req.user as Record<string, unknown> | undefined)?.role;
+        if (!role) {
+            return next(new HttpError(401, 'Unauthorized'));
+        }
+        if (!roles.includes(role as 'user' | 'provider' | 'admin')) {
+            return next(new HttpError(403, 'Forbidden'));
+        }
+        return next();
+    };
 }

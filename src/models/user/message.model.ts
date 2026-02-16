@@ -1,15 +1,17 @@
 import mongoose, { Document, Schema } from "mongoose";
 import { MessageType } from "../../types/user/message.type";
 
-const MessageSchema: Schema = new Schema<MessageType>(
+const MessageSchema: Schema = new Schema(
     {
         content: { type: String, required: true },
-        userId: { type: String, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true }
     },
     {
         timestamps: true,
     }
 );
+
+MessageSchema.index({ userId: 1, createdAt: -1 });
 
 MessageSchema.virtual("id").get(function (this: IMessage) {
     return this._id.toHexString();

@@ -5,6 +5,7 @@ export const CreateProviderDTO = ProviderSchema.pick({
     businessName: true,
     address: true,
     phone: true,
+    providerType: true,
     
 }
 ).extend({

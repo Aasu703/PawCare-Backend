@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ZodType } from "zod";
+import { HttpError } from "../errors/http-error";
 
 export function validateBody(schema: ZodType<any>) {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -8,7 +9,7 @@ export function validateBody(schema: ZodType<any>) {
       req.body = parsed;
       return next();
     } catch (err: any) {
-      return res.status(400).json({ success: false, message: err.errors || err.message });
+      return next(new HttpError(400, "Validation failed", err?.errors || err?.message));
     }
   };
 }

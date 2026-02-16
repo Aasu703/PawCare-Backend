@@ -9,6 +9,8 @@ export class ProviderRepository {
             phone: data.phone,
             email: data.email,
             password: data.password,
+            providerType: (data as any).providerType || null,
+            status: "pending",
         });
         return provider;
     }
@@ -21,7 +23,7 @@ export class ProviderRepository {
         return ProviderModel.findById(id).exec();
     }
 
-    async updateProviderById(id: string, updates: Partial<Pick<IProvider, "businessName" | "address" | "phone" | "email" | "password">>): Promise<IProvider | null> {
+    async updateProviderById(id: string, updates: Partial<IProvider>): Promise<IProvider | null> {
         return ProviderModel.findByIdAndUpdate(id, updates, { new: true }).exec();
     }
 
@@ -32,7 +34,16 @@ export class ProviderRepository {
     async getAllProviders(): Promise<IProvider[]> {
         return ProviderModel.find().exec();
     }
+
     async getProviderByUserId(userId: string): Promise<IProvider | null> {
         return ProviderModel.findOne({ userId }).exec();
+    }
+
+    async getProvidersByType(providerType: string): Promise<IProvider[]> {
+        return ProviderModel.find({ providerType, status: "approved" }).exec();
+    }
+
+    async getProvidersByStatus(status: string): Promise<IProvider[]> {
+        return ProviderModel.find({ status }).exec();
     }
 }

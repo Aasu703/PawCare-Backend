@@ -1,6 +1,11 @@
 import { MessageModel, IMessage } from "../../models/user/message.model";
 import { CreateMessageDto, UpdateMessageDto } from "../../dtos/user/message.dto";
 
+const messageAuthorPopulate = {
+    path: "userId",
+    select: "Firstname Lastname email imageUrl",
+};
+
 export class MessageRepository {
     async createMessage(data: CreateMessageDto, userId: string): Promise<IMessage> {
         return MessageModel.create({ ...data, userId });
@@ -13,14 +18,22 @@ export class MessageRepository {
     async getAllMessages(page: number = 1, limit: number = 10) {
         const skip = (page - 1) * limit;
         const [messages, total] = await Promise.all([
-            MessageModel.find().sort({ createdAt: -1 }).skip(skip).limit(limit).exec(),
+            MessageModel.find()
+                .populate(messageAuthorPopulate)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .exec(),
             MessageModel.countDocuments().exec()
         ]);
         return { messages, total, page, limit, totalPages: Math.ceil(total / limit) };
     }
 
     async getMessagesByUserId(userId: string): Promise<IMessage[]> {
-        return MessageModel.find({ userId }).sort({ createdAt: -1 }).exec();
+        return MessageModel.find({ userId })
+            .populate(messageAuthorPopulate)
+            .sort({ createdAt: -1 })
+            .exec();
     }
 
     async updateMessageById(id: string, updates: UpdateMessageDto): Promise<IMessage | null> {

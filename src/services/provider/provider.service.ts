@@ -2,12 +2,18 @@ import { CreateProviderDTO, LoginProviderDTO } from "../../dtos/provider/provide
 import bcryptjs from "bcryptjs";
 import { HttpError } from "../../errors/http-error";
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../../config";
+import { JWT_ACCESS_EXPIRES_IN, JWT_SECRET } from "../../config";
 import { ProviderRepository } from "../../repositories/provider/provider.repository";
 
 const providerRepository = new ProviderRepository();
 
 export class ProviderService {
+    private sanitizeProvider(provider: Record<string, any>) {
+        const plain = typeof provider.toObject === "function" ? provider.toObject() : provider;
+        const { password, ...safeProvider } = plain;
+        return safeProvider;
+    }
+
     async createProvider(data: CreateProviderDTO) {
         const emailCheck = await providerRepository.getProviderByEmail(data.email);
         if (emailCheck) {
@@ -18,7 +24,19 @@ export class ProviderService {
         data.password = hashedPassword;
 
         const newProvider = await providerRepository.createProvider(data);
-        return newProvider;
+        
+        // Generate token for the newly registered provider
+        const payload = {
+            id: newProvider._id,
+            email: newProvider.email,
+            businessName: newProvider.businessName,
+            role: newProvider.role || "provider",
+            providerType: newProvider.providerType || null,
+            status: newProvider.status || "pending",
+        };
+
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"] });
+        return { token, provider: this.sanitizeProvider(newProvider as unknown as Record<string, any>) };
     }
 
     async loginProvider(data: LoginProviderDTO) {
@@ -37,10 +55,12 @@ export class ProviderService {
             email: provider.email,
             businessName: provider.businessName,
             role: provider.role || "provider",
+            providerType: provider.providerType || null,
+            status: provider.status || "pending",
         };
 
-        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "30d" });
-        return { token, provider };
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"] });
+        return { token, provider: this.sanitizeProvider(provider as unknown as Record<string, any>) };
     }
 
     async getProviderById(id: string) {
@@ -55,7 +75,7 @@ export class ProviderService {
         return providerRepository.getAllProviders();
     }
 
-    async updateProvider(id: string, updates: Partial<{ businessName: string; address: string; phone: string; email: string }>) {
+    async updateProvider(id: string, updates: Record<string, any>) {
         const provider = await providerRepository.updateProviderById(id, updates);
         if (!provider) {
             throw new HttpError(404, "Provider not found");
@@ -69,5 +89,72 @@ export class ProviderService {
             throw new HttpError(404, "Provider not found");
         }
         return provider;
+    }
+
+    async setProviderType(
+        id: string,
+        payload: {
+            providerType: "shop" | "vet" | "babysitter";
+            certification?: string;
+            experience?: string;
+            clinicOrShopName?: string;
+            panNumber?: string;
+        }
+    ) {
+        const { providerType, certification, experience, clinicOrShopName, panNumber } = payload;
+        const updates: Record<string, any> = {
+            providerType,
+            status: "pending",
+            certification: certification || "",
+            experience: experience || "",
+            clinicOrShopName: clinicOrShopName || "",
+            panNumber: panNumber || "",
+        };
+
+        const provider = await providerRepository.updateProviderById(id, updates);
+        if (!provider) {
+            throw new HttpError(404, "Provider not found");
+        }
+        return provider;
+    }
+
+    async getProviderProfile(id: string) {
+        const provider = await providerRepository.getProviderById(id);
+        if (!provider) {
+            throw new HttpError(404, "Provider not found");
+        }
+        return provider;
+    }
+
+    async updateProviderProfile(id: string, updates: Record<string, any>) {
+        const provider = await providerRepository.updateProviderById(id, updates);
+        if (!provider) {
+            throw new HttpError(404, "Provider not found");
+        }
+        return provider;
+    }
+
+    async approveProvider(id: string) {
+        const provider = await providerRepository.updateProviderById(id, { status: "approved" });
+        if (!provider) {
+            throw new HttpError(404, "Provider not found");
+        }
+        return provider;
+    }
+
+    async rejectProvider(id: string) {
+        const provider = await providerRepository.updateProviderById(id, { status: "rejected" });
+        if (!provider) {
+            throw new HttpError(404, "Provider not found");
+        }
+        return provider;
+    }
+
+    async getProvidersByType(providerType: string) {
+        return providerRepository.getProvidersByType(providerType);
+    }
+
+    async getProvidersByStatus(status: string) {
+        return providerRepository.getProvidersByStatus(status);
     }
 }

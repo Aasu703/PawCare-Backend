@@ -6,6 +6,12 @@ import z from "zod";
 const providerService = new ProviderService();
 
 export class ProviderController {
+    private sanitizeProvider(provider: Record<string, any>) {
+        const plain = typeof provider.toObject === "function" ? provider.toObject() : provider;
+        const { password, ...safeProvider } = plain;
+        return safeProvider;
+    }
+
     async register(req: Request, res: Response) {
         try {
             const parsedData = CreateProviderDTO.safeParse(req.body);
@@ -15,9 +21,9 @@ export class ProviderController {
                 );
             }
             const providerData: any = parsedData.data;
-            const newProvider = await providerService.createProvider(providerData);
+            const { token, provider } = await providerService.createProvider(providerData);
             return res.status(201).json(
-                { success: true, message: "Provider Created", data: newProvider }
+                { success: true, message: "Provider Created", data: { provider, accessToken: token }, token }
             );
         } catch (error: Error | any) {
             return res.status(error.statusCode ?? 500).json(
@@ -38,9 +44,9 @@ export class ProviderController {
             if (req.file) {
                 providerData.imageUrl = `/uploads/${req.file.filename}`;
             }
-            const newProvider = await providerService.createProvider(providerData);
+            const { token, provider } = await providerService.createProvider(providerData);
             return res.status(201).json(
-                { success: true, message: "Provider Created", data: newProvider }
+                { success: true, message: "Provider Created", data: { provider, accessToken: token }, token }
             );
         } catch (error: Error | any) {
             return res.status(error.statusCode ?? 500).json(
@@ -60,7 +66,7 @@ export class ProviderController {
             const loginData: LoginProviderDTO = parsedData.data;
             const { token, provider } = await providerService.loginProvider(loginData);
             return res.status(200).json(
-                { success: true, message: "Login successful", data: provider, token }
+                { success: true, message: "Login successful", data: { provider, accessToken: token }, token }
             );
         } catch (error: Error | any) {
             return res.status(error.statusCode ?? 500).json(
@@ -122,6 +128,139 @@ export class ProviderController {
             return res.status(error.statusCode ?? 500).json(
                 { success: false, message: error.message || "Internal Server Error" }
             );
+        }
+    }
+
+    async setProviderType(req: Request, res: Response) {
+        try {
+            const providerId = (req as any).provider?._id || req.params.id;
+            const providerType = req.body?.providerType ?? req.body?.type;
+            if (!providerType || !["shop", "vet", "babysitter"].includes(providerType)) {
+                return res.status(400).json({ success: false, message: "Invalid provider type. Must be shop, vet, or babysitter" });
+            }
+
+            const certification = (req.body?.certification || "").trim();
+            const experience = (req.body?.experience || "").trim();
+            const clinicOrShopName = (req.body?.clinicOrShopName || "").trim();
+            const panNumber = (req.body?.panNumber || "").trim().toUpperCase();
+
+            if (providerType === "vet") {
+                if (!certification || !experience || !clinicOrShopName) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "For vet providers, certification, experience, and clinic/shop name are required",
+                    });
+                }
+            }
+
+            // "babysitter" is used as the groomer flow in the frontend.
+            if (providerType === "babysitter") {
+                if (!experience) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "For groomer providers, experience is required",
+                    });
+                }
+            }
+
+            if (providerType === "shop") {
+                if (!clinicOrShopName || !panNumber) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "For shop providers, shop name and PAN number are required",
+                    });
+                }
+            }
+
+            const provider = await providerService.setProviderType(providerId, {
+                providerType,
+                certification,
+                experience,
+                clinicOrShopName,
+                panNumber,
+            });
+            return res.status(200).json({ success: true, message: "Provider details submitted for admin verification", data: this.sanitizeProvider(provider as any) });
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
+        }
+    }
+
+    async getMyProfile(req: Request, res: Response) {
+        try {
+            const providerId = (req as any).provider?._id;
+            if (!providerId) {
+                return res.status(401).json({ success: false, message: "Unauthorized" });
+            }
+            const provider = await providerService.getProviderProfile(providerId);
+            return res.status(200).json({ success: true, data: this.sanitizeProvider(provider as any) });
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
+        }
+    }
+
+    async updateMyProfile(req: Request, res: Response) {
+        try {
+            const providerId = (req as any).provider?._id;
+            if (!providerId) {
+                return res.status(401).json({ success: false, message: "Unauthorized" });
+            }
+
+            const updates: Record<string, any> = {};
+            const allowedFields = [
+                "businessName",
+                "address",
+                "phone",
+                "email",
+                "certification",
+                "experience",
+                "clinicOrShopName",
+                "panNumber",
+            ];
+
+            for (const field of allowedFields) {
+                if (typeof req.body?.[field] === "string") {
+                    updates[field] = req.body[field].trim();
+                }
+            }
+
+            if (updates.panNumber) {
+                updates.panNumber = updates.panNumber.toUpperCase();
+            }
+
+            const provider = await providerService.updateProviderProfile(providerId, updates);
+            return res.status(200).json({ success: true, message: "Provider profile updated", data: this.sanitizeProvider(provider as any) });
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
+        }
+    }
+
+    async approveProvider(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const provider = await providerService.approveProvider(id);
+            return res.status(200).json({ success: true, message: "Provider approved", data: provider });
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
+        }
+    }
+
+    async rejectProvider(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const provider = await providerService.rejectProvider(id);
+            return res.status(200).json({ success: true, message: "Provider rejected", data: provider });
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
+        }
+    }
+
+    async getProvidersByStatus(req: Request, res: Response) {
+        try {
+            const { status } = req.params;
+            const providers = await providerService.getProvidersByStatus(status);
+            return res.status(200).json({ success: true, data: providers });
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
         }
     }
 }

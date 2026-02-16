@@ -14,6 +14,21 @@ router.get("/my", authorizedMiddleware, (req: Request, res: Response) =>
     reviewController.getMyReviews(req, res)
 );
 
+// Get reviews by provider (public)
+router.get("/provider/:providerId", (req: Request, res: Response) =>
+    reviewController.getByProvider(req, res)
+);
+
+// Get provider average rating (public)
+router.get("/provider/:providerId/rating", (req: Request, res: Response) =>
+    reviewController.getProviderRating(req, res)
+);
+
+// Get reviews by product (public)
+router.get("/product/:productId", (req: Request, res: Response) =>
+    reviewController.getByProduct(req, res)
+);
+
 // Get review by ID
 router.get("/:id", authorizedMiddleware, (req: Request, res: Response) =>
     reviewController.getById(req, res)

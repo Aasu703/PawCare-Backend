@@ -3,7 +3,12 @@ import { ReviewSchema } from "../../types/user/review.type";
 
 export const CreateReviewDto = ReviewSchema.pick({
     rating: true,
-    comment: true
+    comment: true,
+    providerId: true,
+    providerServiceId: true,
+    productId: true,
+    bookingId: true,
+    reviewType: true
 });
 
 export type CreateReviewDto = z.infer<typeof CreateReviewDto>;

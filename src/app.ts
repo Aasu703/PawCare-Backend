@@ -2,6 +2,7 @@ import authRoutes from './routes/user/auth.route';
 import providerRouter from "./routes/provider/provider.route";
 import providerServiceRoute from './routes/provider/service.route';
 import providerInventoryRoute from './routes/provider/inventory.route';
+import providerPostRoute from './routes/provider/post.route';
 import petRouter from "./routes/pet/pet.route";
 import path from 'path';
 import admiUserRoute from './routes/admin/user.route';
@@ -12,11 +13,14 @@ import adminBookingRoute from './routes/admin/booking.route';
 import adminServiceRoute from './routes/admin/service.route';
 import adminReviewRoute from './routes/admin/review.route';
 import adminMessageRoute from './routes/admin/message.route';
+import adminPostRoute from './routes/admin/post.route';
 import adminHealthRecordRoute from './routes/admin/healthrecord.route';
 import adminFeedbackRoute from './routes/admin/feedback.route';
 import adminInventoryRoute from './routes/admin/inventory.route';
 import bookingRoute from './routes/user/booking.route';
 import serviceRoute from './routes/public/service.route';
+import publicPostRoute from './routes/public/post.route';
+import publicInventoryRoute from './routes/public/inventory.route';
 import reviewRoute from './routes/user/review.route';
 import messageRoute from './routes/user/message.route';
 import healthRecordRoute from './routes/pet/healthrecord.route';
@@ -28,6 +32,9 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { de } from 'zod/v4/locales';
 import multer from 'multer';
+import { responseStandardizer } from './utils/api-response';
+import orderRoute from './routes/user/order.route';
+import cartRoute from './routes/user/cart.route';
 import { HttpError } from './errors/http-error';
 
 const app: Application = express();
@@ -49,11 +56,34 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Standardize all JSON responses to { success, message, data/error }
+app.use(responseStandardizer);
+
 // Request/response logging middleware
 app.use((req: Request, res: Response, next) => {
     const startTime = Date.now();
     const originalJson = res.json.bind(res);
     let responseBody: unknown;
+
+    const redact = (obj: any): any => {
+        if (obj === null || obj === undefined) return obj;
+        if (Array.isArray(obj)) return obj.map(redact);
+        if (typeof obj !== 'object') return obj;
+        const redacted: any = {};
+        for (const [k, v] of Object.entries(obj)) {
+            const key = k.toLowerCase();
+            if (key.includes('password') || key === 'pwd' || key === 'pass' || key === 'token') {
+                redacted[k] = '***';
+            } else if (typeof v === 'object') {
+                redacted[k] = redact(v);
+            } else {
+                redacted[k] = v;
+            }
+        }
+        return redacted;
+    };
+
+    const redactEnabled = process.env.LOG_REDACT !== 'false';
 
     res.json = (body: unknown) => {
         responseBody = body;
@@ -67,19 +97,54 @@ app.use((req: Request, res: Response, next) => {
             url: req.originalUrl,
             statusCode: res.statusCode,
             durationMs,
+            request: {},
+            response: responseBody,
         };
+
+        try {
+            if (req.body && Object.keys(req.body).length) {
+                (logPayload.request as any).body = redactEnabled ? redact(req.body) : req.body;
+            }
+        } catch {}
+
+        try {
+            if (req.params && Object.keys(req.params).length) {
+                (logPayload.request as any).params = req.params;
+            }
+        } catch {}
+
+        try {
+            if (req.query && Object.keys(req.query as any).length) {
+                (logPayload.request as any).query = req.query;
+            }
+        } catch {}
 
         if (responseBody && typeof responseBody === 'object') {
             const bodyObj = responseBody as Record<string, unknown>;
             if ('success' in bodyObj) logPayload.success = bodyObj.success;
             if ('message' in bodyObj) logPayload.message = bodyObj.message;
-            if ('data' in bodyObj) logPayload.data = bodyObj.data;
         }
 
         try {
             console.log('[HTTP]', JSON.stringify(logPayload));
         } catch {
             console.log('[HTTP]', logPayload);
+        }
+
+        // Also print full response payload (redacted unless LOG_REDACT=false)
+        try {
+            const respToLog = redactEnabled && typeof responseBody === 'object' ? redact(responseBody) : responseBody;
+            try {
+                console.log('[RESPONSE PAYLOAD]', JSON.stringify(respToLog, null, 2));
+            } catch {
+                console.log('[RESPONSE PAYLOAD]', respToLog);
+            }
+        } catch {}
+
+        if ((logPayload as any).success) {
+            try {
+                console.log('[SUCCESS]', req.method, req.originalUrl, '-', (logPayload as any).message || 'OK');
+            } catch {}
         }
     });
 
@@ -93,10 +158,12 @@ app.get('/', (req: Request, res: Response) => {
 
 // Auth routes
 app.use('/api/auth', authRoutes);
-// Provider routes
-app.use("/api/provider", providerRouter);
 // Provider-managed services
 app.use('/api/provider/service', providerServiceRoute);
+// Provider routes
+app.use("/api/provider", providerRouter);
+// Provider post routes
+app.use('/api/provider/post', providerPostRoute);
 // User Pet routes
 app.use("/api/user/pet", petRouter);
 // Admin User routes
@@ -115,19 +182,26 @@ app.use('/api/admin/service', adminServiceRoute);
 app.use('/api/admin/review', adminReviewRoute);
 // Admin Message routes
 app.use('/api/admin/message', adminMessageRoute);
+// Admin post routes
+app.use('/api/admin/post', adminPostRoute);
 // Admin Health Record routes
 app.use('/api/admin/health-record', adminHealthRecordRoute);
 // Admin Feedback routes
 app.use('/api/admin/feedback', adminFeedbackRoute);
 // Admin Inventory routes
 app.use('/api/admin/inventory', adminInventoryRoute);
-
 // Booking routes
 app.use('/api/booking', bookingRoute);
-
+// Order routes
+app.use('/api/order', orderRoute);
+// Cart routes
+app.use('/api/cart', cartRoute);
 // Public Service routes
 app.use('/api/service', serviceRoute);
-
+// Public post routes
+app.use('/api/post', publicPostRoute);
+// Public product/inventory routes
+app.use('/api/product', publicInventoryRoute);
 // Review routes
 app.use('/api/review', reviewRoute);
 // Message routes

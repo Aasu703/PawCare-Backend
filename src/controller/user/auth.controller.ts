@@ -1,8 +1,7 @@
 import { UserService } from "../../services/user/user.service";
-import { CreateUserDTO, LoginUserDTO, UpdateUserDto } from "../../dtos/user/user.dto";
+import { CreateUserDTO, LoginUserDTO } from "../../dtos/user/user.dto";
 import { Request, Response } from "express";
-import z, { date, success } from "zod";
-import { ca } from "zod/v4/locales";
+import z from "zod";
 import { UserModel } from "../../models/user/user.model";
 
 
@@ -16,7 +15,6 @@ export class AuthController {
                     { success: false, message: z.prettifyError(parsedData.error) }
                 )
             }
-            console.log(parsedData)
             const userData: CreateUserDTO = parsedData.data;
             const newUser = await userService.createUser(userData);
             return res.status(201).json(
@@ -40,7 +38,6 @@ export class AuthController {
             const loginData: LoginUserDTO = parsedData.data;
             const { token, user } = await userService.loginUser(loginData);
             
-            // Set httpOnly cookie for authentication
             res.cookie('auth_token', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
@@ -49,7 +46,7 @@ export class AuthController {
             });
             
             return res.status(200).json(
-                { success: true, message: "Login successful", data: user, token: token }
+                { success: true, message: "Login successful", data: { user, accessToken: token }, token }
             );
 
         } catch (error: Error | any) {
@@ -118,10 +115,13 @@ export class AuthController {
 
         await user.save();
 
+        const userObject = user.toObject() as unknown as Record<string, unknown>;
+        delete userObject.password;
+
         res.json({
             success: true,
             message: 'Profile updated successfully.',
-            data: user.toObject(),
+            data: userObject,
         });
     } catch (err: any) {
         res.status(500).json({ success: false, message: 'Server error', error: err.message });

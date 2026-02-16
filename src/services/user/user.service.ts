@@ -2,7 +2,7 @@ import { CreateUserDTO, LoginUserDTO, UpdateUserDto } from "../../dtos/user/user
 import bcryptjs from "bcryptjs";
 import { HttpError } from "../../errors/http-error";
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../../config";
+import { JWT_ACCESS_EXPIRES_IN, JWT_SECRET, RESET_TOKEN_EXPIRES_IN } from "../../config";
 import { UserRepository } from "../../repositories/user/user.repository";
 
 
@@ -11,24 +11,22 @@ import { sendEmail } from "../../config/email";
 const CLIENT_URL = process.env.CLIENT_URL as string;
 
 export class UserService {
+    private sanitizeUser(user: Record<string, any>) {
+        const plain = typeof user.toObject === "function" ? user.toObject() : user;
+        const { password, ...safeUser } = plain;
+        return safeUser;
+    }
+
     async createUser(data: CreateUserDTO){
         const emailCheck = await userRepository.getUserByEmail(data.email);
         if(emailCheck){
             throw new HttpError(403, "Email is already in use");
         }
-        const firstNameCheck = await userRepository.getUserByFullName(data.Firstname);
-        if(firstNameCheck){
-            throw new HttpError(403,"Please enter a proper name");
-        }
-         const lastNameCheck = await userRepository.getUserByFullName(data.Lastname);
-        if(lastNameCheck){
-            throw new HttpError(403,"Please enter a proper name");
-        }
         const hashedPassword = await bcryptjs.hash(data.password, 10)
         data.password = hashedPassword;
 
         const newUser = await userRepository.createUser(data);
-        return newUser;
+        return this.sanitizeUser(newUser as unknown as Record<string, any>);
     }
 
     async loginUser(data: LoginUserDTO){
@@ -48,8 +46,8 @@ export class UserService {
             role: user.role,
             phone:user.phone
         }
-        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '30d'});
-        return { token, user };
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"] });
+        return { token, user: this.sanitizeUser(user as unknown as Record<string, any>) };
     }
 
     async getUserById(userId: string){
@@ -101,7 +99,7 @@ export class UserService {
         if (!user) {
             throw new HttpError(404, "User not found");
         }
-        const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '1h' }); // 1 hour expiry
+        const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: RESET_TOKEN_EXPIRES_IN as jwt.SignOptions["expiresIn"] });
         const resetLink = `${CLIENT_URL}/reset-password?token=${token}`;
         const html = `<p>Click <a href="${resetLink}">here</a> to reset your password. This link will expire in 1 hour.</p>`;
         await sendEmail(user.email, "Password Reset", html);

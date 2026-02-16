@@ -72,6 +72,37 @@ export class ReviewController {
             return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
         }
     }
+
+    async getByProvider(req: Request, res: Response) {
+        try {
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const result = await reviewService.getReviewsByProviderId(req.params.providerId, page, limit);
+            return res.status(200).json({ success: true, data: result });
+        } catch (error: any) {
+            return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
+        }
+    }
+
+    async getByProduct(req: Request, res: Response) {
+        try {
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const result = await reviewService.getReviewsByProductId(req.params.productId, page, limit);
+            return res.status(200).json({ success: true, data: result });
+        } catch (error: any) {
+            return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
+        }
+    }
+
+    async getProviderRating(req: Request, res: Response) {
+        try {
+            const avgRating = await reviewService.getAverageRatingByProviderId(req.params.providerId);
+            return res.status(200).json({ success: true, data: { averageRating: avgRating } });
+        } catch (error: any) {
+            return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
+        }
+    }
 }
 
 export default new ReviewController();

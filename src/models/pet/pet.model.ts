@@ -18,6 +18,9 @@ const PetSchema: Schema = new Schema<PetType>(
     }
 );
 
+PetSchema.index({ ownerId: 1, createdAt: -1 });
+PetSchema.index({ species: 1 });
+
 export interface IPet extends PetType, Document {
     _id: mongoose.Types.ObjectId;
     createdAt: Date;

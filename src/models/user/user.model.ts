@@ -1,14 +1,13 @@
 import mongoose, {Document, Schema} from "mongoose";
-import { v4 as uuidv4 } from "uuid";
 import { UserType } from "../../types/user/user.type";
 
 const UserSchema: Schema = new Schema<UserType>(
     {
-        email: {type: String, required: true, unique: true},
+        email: {type: String, required: true, unique: true, lowercase: true, trim: true, index: true},
         password: {type: String, required: true},
-        Firstname: {type: String, required: true},
-        Lastname: {type: String, required: true},
-        phone: {type: String},
+        Firstname: {type: String, required: true, trim: true},
+        Lastname: {type: String, required: true, trim: true},
+        phone: {type: String, index: true},
         role: {type: String, enum: ["user", "admin", "provider"], default: "user"},
         imageUrl: {type: String, required: false} // for image URL storage
     },
@@ -17,6 +16,8 @@ const UserSchema: Schema = new Schema<UserType>(
     }
     
 );
+
+UserSchema.index({ role: 1, createdAt: -1 });
 
 UserSchema.virtual('id').get(function(this: IUser) {
     return this._id.toHexString();
