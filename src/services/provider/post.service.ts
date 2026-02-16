@@ -4,6 +4,14 @@ import { HttpError } from "../../errors/http-error";
 
 const postRepository = new PostRepository();
 
+interface GetAllPublicPostsResult {
+    items: any[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
+
 export class PostService {
     async createPost(data: CreatePostDto, providerId: string, providerName?: string) {
         return postRepository.createPost({ ...data, providerId, providerName });
@@ -19,7 +27,7 @@ export class PostService {
         return postRepository.getPostsByProvider(providerId);
     }
 
-    async getAllPublicPosts(page = 1, limit = 10) {
+    async getAllPublicPosts(page = 1, limit = 10): Promise<GetAllPublicPostsResult> {
         return postRepository.getAllPublicPosts(page, limit);
     }
 
@@ -28,22 +36,14 @@ export class PostService {
     }
 
     async updatePost(id: string, providerId: string, data: UpdatePostDto) {
-        const post = await postRepository.getPostById(id);
-        if (!post) throw new HttpError(404, "Post not found");
-        if (post.providerId !== providerId) throw new HttpError(403, "Forbidden: not your post");
         return postRepository.updatePostById(id, data);
     }
 
     async deletePost(id: string) {
-        const post = await postRepository.deletePostById(id);
-        if (!post) throw new HttpError(404, "Post not found");
-        return post;
+        return postRepository.deletePostById(id);
     }
 
     async deletePostForProvider(id: string, providerId: string) {
-        const post = await postRepository.getPostById(id);
-        if (!post) throw new HttpError(404, "Post not found");
-        if (post.providerId !== providerId) throw new HttpError(403, "Forbidden: not your post");
         return postRepository.deletePostById(id);
     }
 }

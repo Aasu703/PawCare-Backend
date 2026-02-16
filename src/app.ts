@@ -158,10 +158,10 @@ app.get('/', (req: Request, res: Response) => {
 
 // Auth routes
 app.use('/api/auth', authRoutes);
-// Provider routes
-app.use("/api/provider", providerRouter);
 // Provider-managed services
 app.use('/api/provider/service', providerServiceRoute);
+// Provider routes
+app.use("/api/provider", providerRouter);
 // Provider post routes
 app.use('/api/provider/post', providerPostRoute);
 // User Pet routes

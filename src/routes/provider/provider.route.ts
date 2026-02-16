@@ -11,6 +11,9 @@ router.post("/login", (req, res) => providerController.login(req, res));
 
 // Provider self-service: set their type
 router.put("/set-type", authorizedMiddleware, providerMiddleware, (req, res) => providerController.setProviderType(req, res));
+router.post("/set-type", authorizedMiddleware, providerMiddleware, (req, res) => providerController.setProviderType(req, res));
+router.get("/me", authorizedMiddleware, providerMiddleware, (req, res) => providerController.getMyProfile(req, res));
+router.put("/profile", authorizedMiddleware, providerMiddleware, (req, res) => providerController.updateMyProfile(req, res));
 
 // Admin: approve/reject providers
 router.put("/approve/:id", authorizedMiddleware, adminMiddleware, (req, res) => providerController.approveProvider(req, res));

@@ -13,6 +13,10 @@ const ProviderSchema: Schema = new Schema(
         role: {type: String, enum: ["provider"], default: "provider"},
         providerType: {type: String, enum: ["shop", "vet", "babysitter"], default: null},
         status: {type: String, enum: ["pending", "approved", "rejected"], default: "pending"},
+        certification: { type: String, default: "" },
+        experience: { type: String, default: "" },
+        clinicOrShopName: { type: String, default: "" },
+        panNumber: { type: String, default: "" },
     },
     {
         timestamps: true,
@@ -28,6 +32,10 @@ export interface IProvider extends ProviderType, Document {
     role: "provider";
     providerType?: "shop" | "vet" | "babysitter";
     status: "pending" | "approved" | "rejected";
+    certification?: string;
+    experience?: string;
+    clinicOrShopName?: string;
+    panNumber?: string;
     createdAt?: string;
     updatedAt?: string;
 }

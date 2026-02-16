@@ -24,7 +24,19 @@ export class ProviderService {
         data.password = hashedPassword;
 
         const newProvider = await providerRepository.createProvider(data);
-        return newProvider;
+        
+        // Generate token for the newly registered provider
+        const payload = {
+            id: newProvider._id,
+            email: newProvider.email,
+            businessName: newProvider.businessName,
+            role: newProvider.role || "provider",
+            providerType: newProvider.providerType || null,
+            status: newProvider.status || "pending",
+        };
+
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"] });
+        return { token, provider: this.sanitizeProvider(newProvider as unknown as Record<string, any>) };
     }
 
     async loginProvider(data: LoginProviderDTO) {
@@ -79,8 +91,43 @@ export class ProviderService {
         return provider;
     }
 
-    async setProviderType(id: string, providerType: "shop" | "vet" | "babysitter") {
-        const provider = await providerRepository.updateProviderById(id, { providerType });
+    async setProviderType(
+        id: string,
+        payload: {
+            providerType: "shop" | "vet" | "babysitter";
+            certification?: string;
+            experience?: string;
+            clinicOrShopName?: string;
+            panNumber?: string;
+        }
+    ) {
+        const { providerType, certification, experience, clinicOrShopName, panNumber } = payload;
+        const updates: Record<string, any> = {
+            providerType,
+            status: "pending",
+            certification: certification || "",
+            experience: experience || "",
+            clinicOrShopName: clinicOrShopName || "",
+            panNumber: panNumber || "",
+        };
+
+        const provider = await providerRepository.updateProviderById(id, updates);
+        if (!provider) {
+            throw new HttpError(404, "Provider not found");
+        }
+        return provider;
+    }
+
+    async getProviderProfile(id: string) {
+        const provider = await providerRepository.getProviderById(id);
+        if (!provider) {
+            throw new HttpError(404, "Provider not found");
+        }
+        return provider;
+    }
+
+    async updateProviderProfile(id: string, updates: Record<string, any>) {
+        const provider = await providerRepository.updateProviderById(id, updates);
         if (!provider) {
             throw new HttpError(404, "Provider not found");
         }

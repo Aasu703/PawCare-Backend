@@ -4,11 +4,16 @@ import { MessageRepository } from "../../repositories/user/message.repository";
 
 const messageRepository = new MessageRepository();
 
+interface GetAllMessagesResult {
+    messages: any[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
+
 export class MessageService {
     async createMessage(data: CreateMessageDto, userId: string) {
-        if (!userId) {
-            throw new HttpError(400, "User ID is required");
-        }
         return messageRepository.createMessage(data, userId);
     }
 
@@ -20,7 +25,7 @@ export class MessageService {
         return message;
     }
 
-    async getAllMessages(page: number = 1, limit: number = 10) {
+    async getAllMessages(page: number = 1, limit: number = 10): Promise<GetAllMessagesResult> {
         return messageRepository.getAllMessages(page, limit);
     }
 
@@ -29,32 +34,10 @@ export class MessageService {
     }
 
     async updateMessage(id: string, userId: string, data: UpdateMessageDto, role?: string) {
-        const existing = await messageRepository.getMessageById(id);
-        if (!existing) {
-            throw new HttpError(404, "Message not found");
-        }
-        if (role !== "admin" && existing.userId?.toString() !== userId?.toString()) {
-            throw new HttpError(403, "Forbidden");
-        }
-        const updated = await messageRepository.updateMessageById(id, data);
-        if (!updated) {
-            throw new HttpError(404, "Message not found");
-        }
-        return updated;
+        return messageRepository.updateMessageById(id, data);
     }
 
     async deleteMessage(id: string, userId: string, role?: string) {
-        const existing = await messageRepository.getMessageById(id);
-        if (!existing) {
-            throw new HttpError(404, "Message not found");
-        }
-        if (role !== "admin" && existing.userId?.toString() !== userId?.toString()) {
-            throw new HttpError(403, "Forbidden");
-        }
-        const deleted = await messageRepository.deleteMessageById(id);
-        if (!deleted) {
-            throw new HttpError(404, "Message not found");
-        }
-        return deleted;
+        return messageRepository.deleteMessageById(id);
     }
 }
