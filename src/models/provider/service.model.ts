@@ -7,9 +7,9 @@ const ServiceSchema: Schema = new Schema<ServiceType>(
     description: { type: String },
     price: { type: Number, required: true },
     duration_minutes: { type: Number, required: true },
-    catergory: { type: String },
-    availability: { type: [String], required: false },
-    providerId: { type: String, required: false },
+    category: { type: String, enum: ['grooming', 'boarding', 'vet'] },
+    availability: [{ type: String }],
+    providerId: { type: Schema.Types.ObjectId, ref: 'Provider' }
   },
   { timestamps: true }
 );

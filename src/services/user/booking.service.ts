@@ -92,7 +92,7 @@ export class BookingService {
         if (booking.providerId?.toString() !== providerId.toString()) {
             throw new HttpError(403, "Forbidden: not your booking");
         }
-        const validStatuses = ["confirmed", "cancelled", "completed", "pending"];
+        const validStatuses = ["confirmed", "cancelled", "completed", "pending", "rejected"];
         if (!validStatuses.includes(status)) {
             throw new HttpError(400, `Invalid status. Must be one of: ${validStatuses.join(", ")}`);
         }

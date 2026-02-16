@@ -8,7 +8,7 @@ const InventorySchema: Schema = new Schema<InventoryType>(
         quantity: { type: Number, default: 0 },
         price: { type: Number, required: false },
         category: { type: String, required: false },
-        providerId: { type: String, required: true }
+        providerId: { type: mongoose.Schema.Types.ObjectId, ref: "Provider", required: true }
     },
     {
         timestamps: true,

@@ -1,9 +1,9 @@
 import authRoutes from './routes/user/auth.route';
-import providerRouter from './routes/provider/provider.route';
+import providerRouter from "./routes/provider/provider.route";
 import providerServiceRoute from './routes/provider/service.route';
-import providerServiceApplicationRoute from './routes/provider/provider-service.route';
 import providerInventoryRoute from './routes/provider/inventory.route';
-import petRouter from './routes/pet/pet.route';
+import providerPostRoute from './routes/provider/post.route';
+import petRouter from "./routes/pet/pet.route";
 import path from 'path';
 import admiUserRoute from './routes/admin/user.route';
 import adminPetRoute from './routes/admin/pet.route';
@@ -11,129 +11,238 @@ import adminProviderRoute from './routes/admin/provider.route';
 import adminStatsRoute from './routes/admin/stats.route';
 import adminBookingRoute from './routes/admin/booking.route';
 import adminServiceRoute from './routes/admin/service.route';
-import adminProviderServiceRoute from './routes/admin/provider-service.route';
 import adminReviewRoute from './routes/admin/review.route';
 import adminMessageRoute from './routes/admin/message.route';
+import adminPostRoute from './routes/admin/post.route';
 import adminHealthRecordRoute from './routes/admin/healthrecord.route';
 import adminFeedbackRoute from './routes/admin/feedback.route';
 import adminInventoryRoute from './routes/admin/inventory.route';
 import bookingRoute from './routes/user/booking.route';
 import serviceRoute from './routes/public/service.route';
+import publicPostRoute from './routes/public/post.route';
+import publicInventoryRoute from './routes/public/inventory.route';
 import reviewRoute from './routes/user/review.route';
 import messageRoute from './routes/user/message.route';
 import healthRecordRoute from './routes/pet/healthrecord.route';
 import attachmentRoute from './routes/pet/attachment.route';
 import feedbackRoute from './routes/provider/feedback.route';
-import orderRoute from './routes/user/order.route';
-import adminOrderRoute from './routes/admin/order.route';
-import providerPostRoute from './routes/provider/post.route';
-import publicPostRoute from './routes/public/post.route';
-import adminPostRoute from './routes/admin/post.route';
-import providerBookingRoute from './routes/provider/booking.route';
-import publicInventoryRoute from './routes/public/inventory.route';
-import uploadRoute from './routes/upload.route';
-import express, { Application, Request, Response, Router } from 'express';
+import express, { Application, Request, Response, NextFunction } from 'express';
+import bodyParser from 'body-parser';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
-import { CORS_ORIGINS, IS_PRODUCTION, RATE_LIMIT_MAX_REQUESTS, RATE_LIMIT_WINDOW_MS } from './config';
-import { errorHandler, notFoundHandler } from './middleware/error-handler.middleware';
+import { de } from 'zod/v4/locales';
+import multer from 'multer';
 import { responseStandardizer } from './utils/api-response';
-import { requestLogger } from './utils/logger';
+import orderRoute from './routes/user/order.route';
+import cartRoute from './routes/user/cart.route';
+import { HttpError } from './errors/http-error';
 
 const app: Application = express();
 
-app.set('trust proxy', 1);
+let corsOptions = {
+    origin:["http://localhost:3000", "http://localhost:3001", "http://localhost:3003"],
+    credentials: true, // Allow cookies to be sent
+    // list of domains allowed to access the server
+    // frontend domain/url
+}
 
-app.use(
-    cors({
-        origin: CORS_ORIGINS,
-        credentials: true,
-    })
-);
+// origin: "*", allow all domians
+app.use(cors(corsOptions));
 
-app.use(
-    helmet({
-        crossOriginResourcePolicy: false,
-    })
-);
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); // Serve static files from uploads directory
 
-app.use(
-    rateLimit({
-        windowMs: RATE_LIMIT_WINDOW_MS,
-        max: RATE_LIMIT_MAX_REQUESTS,
-        standardHeaders: true,
-        legacyHeaders: false,
-        message: {
-            success: false,
-            message: 'Too many requests. Please try again later.',
-            error: { code: 'RATE_LIMITED' },
-        },
-    })
-);
-
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+// app.use(cors());
 app.use(cookieParser());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Standardize all JSON responses to { success, message, data/error }
 app.use(responseStandardizer);
-app.use(requestLogger);
 
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Request/response logging middleware
+app.use((req: Request, res: Response, next) => {
+    const startTime = Date.now();
+    const originalJson = res.json.bind(res);
+    let responseBody: unknown;
 
+    const redact = (obj: any): any => {
+        if (obj === null || obj === undefined) return obj;
+        if (Array.isArray(obj)) return obj.map(redact);
+        if (typeof obj !== 'object') return obj;
+        const redacted: any = {};
+        for (const [k, v] of Object.entries(obj)) {
+            const key = k.toLowerCase();
+            if (key.includes('password') || key === 'pwd' || key === 'pass' || key === 'token') {
+                redacted[k] = '***';
+            } else if (typeof v === 'object') {
+                redacted[k] = redact(v);
+            } else {
+                redacted[k] = v;
+            }
+        }
+        return redacted;
+    };
+
+    const redactEnabled = process.env.LOG_REDACT !== 'false';
+
+    res.json = (body: unknown) => {
+        responseBody = body;
+        return originalJson(body);
+    };
+
+    res.on('finish', () => {
+        const durationMs = Date.now() - startTime;
+        const logPayload: Record<string, unknown> = {
+            method: req.method,
+            url: req.originalUrl,
+            statusCode: res.statusCode,
+            durationMs,
+            request: {},
+            response: responseBody,
+        };
+
+        try {
+            if (req.body && Object.keys(req.body).length) {
+                (logPayload.request as any).body = redactEnabled ? redact(req.body) : req.body;
+            }
+        } catch {}
+
+        try {
+            if (req.params && Object.keys(req.params).length) {
+                (logPayload.request as any).params = req.params;
+            }
+        } catch {}
+
+        try {
+            if (req.query && Object.keys(req.query as any).length) {
+                (logPayload.request as any).query = req.query;
+            }
+        } catch {}
+
+        if (responseBody && typeof responseBody === 'object') {
+            const bodyObj = responseBody as Record<string, unknown>;
+            if ('success' in bodyObj) logPayload.success = bodyObj.success;
+            if ('message' in bodyObj) logPayload.message = bodyObj.message;
+        }
+
+        try {
+            console.log('[HTTP]', JSON.stringify(logPayload));
+        } catch {
+            console.log('[HTTP]', logPayload);
+        }
+
+        // Also print full response payload (redacted unless LOG_REDACT=false)
+        try {
+            const respToLog = redactEnabled && typeof responseBody === 'object' ? redact(responseBody) : responseBody;
+            try {
+                console.log('[RESPONSE PAYLOAD]', JSON.stringify(respToLog, null, 2));
+            } catch {
+                console.log('[RESPONSE PAYLOAD]', respToLog);
+            }
+        } catch {}
+
+        if ((logPayload as any).success) {
+            try {
+                console.log('[SUCCESS]', req.method, req.originalUrl, '-', (logPayload as any).message || 'OK');
+            } catch {}
+        }
+    });
+
+    next();
+});
+
+// Health check route
 app.get('/', (req: Request, res: Response) => {
-    return res.status(200).json({
-        success: true,
-        message: 'PawCare API is running!',
-        data: { env: IS_PRODUCTION ? 'production' : 'development' },
+    res.status(200).json({ message: 'PawCare API is running!' });
+});
+
+// Auth routes
+app.use('/api/auth', authRoutes);
+// Provider-managed services
+app.use('/api/provider/service', providerServiceRoute);
+// Provider routes
+app.use("/api/provider", providerRouter);
+// Provider post routes
+app.use('/api/provider/post', providerPostRoute);
+// User Pet routes
+app.use("/api/user/pet", petRouter);
+// Admin User routes
+app.use("/api/admin/users", admiUserRoute);
+// Admin Pet routes
+app.use("/api/admin/pet", adminPetRoute);
+// Admin Provider routes
+app.use("/api/admin/provider", adminProviderRoute);
+// Admin Stats routes
+app.use("/api/admin/stats", adminStatsRoute);
+// Admin Booking routes
+app.use('/api/admin/booking', adminBookingRoute);
+// Admin Service routes
+app.use('/api/admin/service', adminServiceRoute);
+// Admin Review routes
+app.use('/api/admin/review', adminReviewRoute);
+// Admin Message routes
+app.use('/api/admin/message', adminMessageRoute);
+// Admin post routes
+app.use('/api/admin/post', adminPostRoute);
+// Admin Health Record routes
+app.use('/api/admin/health-record', adminHealthRecordRoute);
+// Admin Feedback routes
+app.use('/api/admin/feedback', adminFeedbackRoute);
+// Admin Inventory routes
+app.use('/api/admin/inventory', adminInventoryRoute);
+// Booking routes
+app.use('/api/booking', bookingRoute);
+// Order routes
+app.use('/api/order', orderRoute);
+// Cart routes
+app.use('/api/cart', cartRoute);
+// Public Service routes
+app.use('/api/service', serviceRoute);
+// Public post routes
+app.use('/api/post', publicPostRoute);
+// Public product/inventory routes
+app.use('/api/product', publicInventoryRoute);
+// Review routes
+app.use('/api/review', reviewRoute);
+// Message routes
+app.use('/api/message', messageRoute);
+// Health Record routes
+app.use('/api/health-record', healthRecordRoute);
+// Attachment routes
+app.use('/api/attachment', attachmentRoute);
+// Feedback routes
+app.use('/api/feedback', feedbackRoute);
+// Provider Inventory routes
+app.use('/api/provider/inventory', providerInventoryRoute);
+
+// Error handling middleware
+app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
+    if (err instanceof HttpError) {
+        return res.status(err.statusCode || 400).json({
+            success: false,
+            message: err.message || "Bad Request"
+        });
+    }
+
+    if (err instanceof multer.MulterError) {
+        return res.status(400).json({
+            success: false,
+            message: err.message || "File upload error"
+        });
+    }
+
+    if (err instanceof Error) {
+        return res.status(500).json({
+            success: false,
+            message: err.message || "Internal Server Error"
+        });
+    }
+
+    return res.status(500).json({
+        success: false,
+        message: "Internal Server Error"
     });
 });
 
-function buildApiRouter() {
-    const router = Router();
-
-    router.use('/auth', authRoutes);
-    router.use('/provider/inventory', providerInventoryRoute);
-    router.use('/provider/service', providerServiceRoute);
-    router.use('/provider/provider-service', providerServiceApplicationRoute);
-    router.use('/provider', providerRouter);
-    router.use('/user/pet', petRouter);
-    router.use('/admin/users', admiUserRoute);
-    router.use('/admin/pet', adminPetRoute);
-    router.use('/admin/provider', adminProviderRoute);
-    router.use('/admin/stats', adminStatsRoute);
-    router.use('/admin/booking', adminBookingRoute);
-    router.use('/admin/service', adminServiceRoute);
-    router.use('/admin/provider-service', adminProviderServiceRoute);
-    router.use('/admin/review', adminReviewRoute);
-    router.use('/admin/message', adminMessageRoute);
-    router.use('/admin/health-record', adminHealthRecordRoute);
-    router.use('/admin/feedback', adminFeedbackRoute);
-    router.use('/admin/inventory', adminInventoryRoute);
-    router.use('/booking', bookingRoute);
-    router.use('/service', serviceRoute);
-    router.use('/review', reviewRoute);
-    router.use('/message', messageRoute);
-    router.use('/health-record', healthRecordRoute);
-    router.use('/attachment', attachmentRoute);
-    router.use('/feedback', feedbackRoute);
-    router.use('/order', orderRoute);
-    router.use('/admin/order', adminOrderRoute);
-    router.use('/provider/post', providerPostRoute);
-    router.use('/post', publicPostRoute);
-    router.use('/admin/post', adminPostRoute);
-    router.use('/provider/booking', providerBookingRoute);
-    router.use('/product', publicInventoryRoute);
-    router.use('/upload', uploadRoute);
-
-    return router;
-}
-
-const apiRouter = buildApiRouter();
-app.use('/api/v1', apiRouter);
-app.use('/api', apiRouter);
-
-app.use(notFoundHandler);
-app.use(errorHandler);
 
 export default app;

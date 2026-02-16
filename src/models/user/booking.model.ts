@@ -5,10 +5,10 @@ const BookingSchema: Schema = new Schema(
     {
         startTime: {type: String, required: true},
         endTime: {type: String, required: true},
-        status: {type: String, enum: ["pending", "confirmed", "completed", "cancelled"], default: "pending"},
+        status: {type: String, enum: ["pending", "confirmed", "completed", "cancelled", "rejected"], default: "pending"},
         price: {type: Number, min: 0, required: false},
         notes: {type: String, required: false},
-        serviceId: {type: mongoose.Schema.Types.ObjectId, ref: "Service", required: false, index: true},
+        serviceId: {type: String, required: false, index: true},
         userId: {type: mongoose.Schema.Types.ObjectId, ref: "User", required: false, index: true},
         petId: {type: mongoose.Schema.Types.ObjectId, ref: "Pet", required: false, index: true},
         providerId: {type: mongoose.Schema.Types.ObjectId, ref: "Provider", required: false, index: true},

@@ -6,6 +6,17 @@ import z from "zod";
 const messageService = new MessageService();
 
 export class MessageController {
+    async getAllMessages(req: Request, res: Response) {
+        try {
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 20;
+            const result = await messageService.getAllMessages(page, limit);
+            return res.status(200).json({ success: true, data: result });
+        } catch (error: any) {
+            return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
+        }
+    }
+
     async create(req: Request, res: Response) {
         try {
             const userId = req.user?._id;

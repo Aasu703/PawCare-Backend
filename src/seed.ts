@@ -88,17 +88,15 @@ async function seedDatabase() {
             role: "provider"
         });
 
-        for (let i = 1; i < 25; i++) {
+        for (let i = 0; i < 25; i++) {
             const city = providerCities[i % providerCities.length];
-            const slug = businessNames[i].toLowerCase().replace(/\s+/g, '');
             providers.push({
                 businessName: businessNames[i],
                 address: `${100 + i} Main St, ${city}, State ${12345 + i}`,
                 phone: `+1234567${String(895 + i).padStart(3, '0')}`,
-                email: `${slug}@example.com`,
+                email: `contact@${businessNames[i].toLowerCase().replace(/\s+/g, '')}@example.com`,
                 password: hashedPassword,
-                rating: Math.round((3.5 + Math.random() * 1.5) * 10) / 10,
-                role: "provider"
+                rating: Math.round((3.5 + Math.random() * 1.5) * 10) / 10 // Random rating between 3.5-5.0
             });
         }
 
@@ -186,7 +184,7 @@ async function seedDatabase() {
         console.log("Seeded services:", createdServices.length);
 
         // ========== BOOKINGS ==========
-        const statuses = ["pending", "confirmed", "completed", "cancelled"] as const;
+        const statuses = ["pending", "confirmed", "completed", "cancelled", "rejected"] as const;
         const bookingNotes = [
             "Please be gentle, pet is nervous",
             "First time visit",
@@ -474,7 +472,7 @@ async function seedDatabase() {
         console.log(`- Providers: ${createdProviders.length}`);
         console.log(`- Pets: ${createdPets.length}`);
         console.log(`- Services: ${createdServices.length}`);
-        console.log(`- Bookings: ${createdBookings.length} (${bookings.filter(b => b.status === 'completed').length} completed, ${bookings.filter(b => b.status === 'cancelled').length} cancelled, ${bookings.filter(b => b.status === 'confirmed').length} confirmed, ${bookings.filter(b => b.status === 'pending').length} pending)`);
+        console.log(`- Bookings: ${createdBookings.length} (${bookings.filter(b => b.status === 'completed').length} completed, ${bookings.filter(b => b.status === 'cancelled').length} cancelled, ${bookings.filter(b => b.status === 'rejected').length} rejected, ${bookings.filter(b => b.status === 'confirmed').length} confirmed, ${bookings.filter(b => b.status === 'pending').length} pending)`);
         console.log(`- Reviews: ${createdReviews.length}`);
         console.log(`- Messages: ${createdMessages.length}`);
         console.log(`- Health Records: ${createdHealthRecords.length}`);

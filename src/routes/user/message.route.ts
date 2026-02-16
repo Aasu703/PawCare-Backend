@@ -4,6 +4,11 @@ import { authorizedMiddleware } from "../../middleware/authorization.middleware"
 
 const router: Router = Router();
 
+// Get shared message/blog feed
+router.get("/", authorizedMiddleware, (req: Request, res: Response) =>
+    messageController.getAllMessages(req, res)
+);
+
 // Create a message
 router.post("/", authorizedMiddleware, (req: Request, res: Response) =>
     messageController.create(req, res)

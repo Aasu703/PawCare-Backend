@@ -47,7 +47,16 @@ export class PostController {
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
             const result = await postService.getAllPublicPosts(page, limit);
-            return res.status(200).json({ success: true, ...result });
+            return res.status(200).json({
+                success: true,
+                data: {
+                    posts: result.items,
+                    total: result.total,
+                    page: result.page,
+                    limit: result.limit,
+                    totalPages: result.totalPages,
+                },
+            });
         } catch (err: any) {
             return res.status(err.statusCode ?? 500).json({ success: false, message: err.message || "Internal Server Error" });
         }
@@ -109,7 +118,16 @@ export class PostController {
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
             const result = await postService.getAllPosts(page, limit);
-            return res.status(200).json({ success: true, ...result });
+            return res.status(200).json({
+                success: true,
+                data: {
+                    posts: result.items,
+                    total: result.total,
+                    page: result.page,
+                    limit: result.limit,
+                    totalPages: result.totalPages,
+                },
+            });
         } catch (err: any) {
             return res.status(err.statusCode ?? 500).json({ success: false, message: err.message || "Internal Server Error" });
         }
