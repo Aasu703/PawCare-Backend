@@ -10,6 +10,8 @@ const serviceRepository = new ServiceRepository();
 
 export class BookingService {
     async createBooking(data: CreateBookingDto, userId: string){
+        let resolvedService: any = null;
+
         if (data.providerServiceId) {
             const providerService = await providerServiceService.getProviderServiceById(data.providerServiceId);
             if (providerService.verificationStatus !== "approved") {
@@ -21,11 +23,11 @@ export class BookingService {
             if (!data.serviceId) {
                 throw new HttpError(400, "serviceId is required when providerServiceId is provided");
             }
-            const service = await serviceRepository.getServiceById(data.serviceId);
-            if (!service) {
+            resolvedService = await serviceRepository.getServiceById(data.serviceId);
+            if (!resolvedService) {
                 throw new HttpError(404, "Service not found");
             }
-            const serviceCategory = (service as any).catergory;
+            const serviceCategory = (resolvedService as any).catergory;
             const typeToCategory: Record<string, string> = {
                 vet: "vet",
                 groomer: "grooming",
@@ -36,6 +38,19 @@ export class BookingService {
                 throw new HttpError(400, "Service type mismatch");
             }
         }
+
+        // Resolve providerId automatically from selected service when not passed by client.
+        if (!data.providerId && data.serviceId) {
+            const service = resolvedService || await serviceRepository.getServiceById(data.serviceId);
+            if (!service) {
+                throw new HttpError(404, "Service not found");
+            }
+            const serviceProviderId = (service as any).providerId?.toString?.() || (service as any).providerId;
+            if (serviceProviderId) {
+                (data as any).providerId = serviceProviderId;
+            }
+        }
+
         const newBooking = await bookingRepository.createBooking(data, userId);
         return newBooking;
     

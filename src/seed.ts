@@ -7,6 +7,7 @@ import { BookingModel } from "./models/user/booking.model";
 import { ReviewModel } from "./models/user/review.model";
 import { MessageModel } from "./models/user/message.model";
 import { HealthRecordModel } from "./models/pet/healthrecord.model";
+import { AttachmentModel } from "./models/pet/attachment.model";
 import { FeedbackModel } from "./models/provider/feedback.model";
 import { InventoryModel } from "./models/provider/inventory.model";
 import bcryptjs from "bcryptjs";
@@ -27,6 +28,7 @@ async function seedDatabase() {
         await ReviewModel.deleteMany({});
         await MessageModel.deleteMany({});
         await HealthRecordModel.deleteMany({});
+        await AttachmentModel.deleteMany({});
         await FeedbackModel.deleteMany({});
         await InventoryModel.deleteMany({});
         console.log("Cleared existing data");
@@ -74,6 +76,7 @@ async function seedDatabase() {
         ];
 
         const providerCities = ["Springfield", "Riverside", "Meadowbrook", "Oakwood", "Pineville", "Maplewood", "Cedarburg", "Elmwood", "Birchwood", "Willowbrook"];
+        const providerTypes: Array<"vet" | "shop" | "babysitter"> = ["vet", "shop", "babysitter"];
 
         const providers = [];
 
@@ -85,18 +88,53 @@ async function seedDatabase() {
             email: "pawcareprovider@gmail.com",
             password: providerHashedPassword,
             rating: 4.5,
-            role: "provider"
+            role: "provider",
+            providerType: "vet",
+            status: "approved",
+            certification: "Nepal Veterinary Council",
+            experience: "8 years",
+            clinicOrShopName: "PawCare Vet Center",
+            panNumber: "PANPC0001"
         });
 
         for (let i = 0; i < 25; i++) {
             const city = providerCities[i % providerCities.length];
+            const providerType = providerTypes[i % providerTypes.length];
+            const commonFields = {
+                providerType,
+                status: "approved" as const,
+                clinicOrShopName: businessNames[i],
+            };
+
+            const typeSpecificFields =
+                providerType === "vet"
+                    ? {
+                          certification: "Board Certified Vet",
+                          experience: `${3 + (i % 10)} years`,
+                          panNumber: `PANVET${String(1000 + i)}`,
+                      }
+                    : providerType === "shop"
+                    ? {
+                          certification: "",
+                          experience: `${2 + (i % 8)} years`,
+                          panNumber: `PANSHOP${String(1000 + i)}`,
+                      }
+                    : {
+                          // "babysitter" type is used as groomer flow in this backend.
+                          certification: "",
+                          experience: `${1 + (i % 7)} years`,
+                          panNumber: `PANGRM${String(1000 + i)}`,
+                      };
+
             providers.push({
                 businessName: businessNames[i],
                 address: `${100 + i} Main St, ${city}, State ${12345 + i}`,
                 phone: `+1234567${String(895 + i).padStart(3, '0')}`,
                 email: `contact@${businessNames[i].toLowerCase().replace(/\s+/g, '')}@example.com`,
                 password: hashedPassword,
-                rating: Math.round((3.5 + Math.random() * 1.5) * 10) / 10 // Random rating between 3.5-5.0
+                rating: Math.round((3.5 + Math.random() * 1.5) * 10) / 10, // Random rating between 3.5-5.0
+                ...commonFields,
+                ...typeSpecificFields,
             });
         }
 
@@ -365,7 +403,7 @@ async function seedDatabase() {
                     nextDueDate: template.recordType === "Vaccination" || template.recordType === "Medication"
                         ? nextDueDate.toISOString().split('T')[0]
                         : undefined,
-                    attachmentsCount: Math.floor(Math.random() * 3),
+                    attachmentsCount: 0,
                     petId: createdPets[i]._id.toString()
                 });
             }
@@ -373,6 +411,51 @@ async function seedDatabase() {
 
         const createdHealthRecords = await HealthRecordModel.insertMany(healthRecords);
         console.log("Seeded health records:", createdHealthRecords.length);
+
+        // ========== ATTACHMENTS ==========
+        const attachmentFileNames = [
+            "lab-report.pdf",
+            "vaccination-card.jpg",
+            "xray-scan.png",
+            "prescription-note.pdf",
+            "bloodwork-results.pdf",
+            "pet-photo.jpg",
+        ];
+
+        const attachments: any[] = [];
+        const attachmentCountByRecord = new Map<string, number>();
+
+        for (let i = 0; i < createdHealthRecords.length; i++) {
+            const record = createdHealthRecords[i];
+            const count = Math.floor(Math.random() * 4); // 0-3 attachments
+            if (count === 0) continue;
+
+            for (let j = 0; j < count; j++) {
+                const fileName = attachmentFileNames[(i + j) % attachmentFileNames.length];
+                attachments.push({
+                    fileName,
+                    fileUrl: `/uploads/dummy/${record._id.toString()}-${j + 1}-${fileName}`,
+                    healthRecordId: record._id.toString(),
+                });
+            }
+
+            attachmentCountByRecord.set(record._id.toString(), count);
+        }
+
+        const createdAttachments = attachments.length
+            ? await AttachmentModel.insertMany(attachments)
+            : [];
+
+        if (attachmentCountByRecord.size > 0) {
+            const bulkOps = Array.from(attachmentCountByRecord.entries()).map(([recordId, count]) => ({
+                updateOne: {
+                    filter: { _id: new mongoose.Types.ObjectId(recordId) },
+                    update: { $set: { attachmentsCount: count } },
+                },
+            }));
+            await HealthRecordModel.bulkWrite(bulkOps);
+        }
+        console.log("Seeded attachments:", createdAttachments.length);
 
         // ========== FEEDBACK ==========
         const feedbackTexts = [
@@ -470,12 +553,14 @@ async function seedDatabase() {
         console.log("\nTotal seeded data:");
         console.log(`- Users: ${createdUsers.length} (1 admin + 24 regular users)`);
         console.log(`- Providers: ${createdProviders.length}`);
+        console.log(`  - Provider types: vet=${createdProviders.filter((p: any) => p.providerType === 'vet').length}, shop=${createdProviders.filter((p: any) => p.providerType === 'shop').length}, groomer(babysitter)=${createdProviders.filter((p: any) => p.providerType === 'babysitter').length}`);
         console.log(`- Pets: ${createdPets.length}`);
         console.log(`- Services: ${createdServices.length}`);
         console.log(`- Bookings: ${createdBookings.length} (${bookings.filter(b => b.status === 'completed').length} completed, ${bookings.filter(b => b.status === 'cancelled').length} cancelled, ${bookings.filter(b => b.status === 'rejected').length} rejected, ${bookings.filter(b => b.status === 'confirmed').length} confirmed, ${bookings.filter(b => b.status === 'pending').length} pending)`);
         console.log(`- Reviews: ${createdReviews.length}`);
         console.log(`- Messages: ${createdMessages.length}`);
         console.log(`- Health Records: ${createdHealthRecords.length}`);
+        console.log(`- Attachments: ${createdAttachments.length}`);
         console.log(`- Feedbacks: ${createdFeedbacks.length}`);
         console.log(`- Inventory Items: ${createdInventory.length}`);
 
