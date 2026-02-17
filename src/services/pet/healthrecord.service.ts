@@ -2,13 +2,17 @@ import { CreateHealthRecordDto, UpdateHealthRecordDto } from "../../dtos/pet/hea
 import { HttpError } from "../../errors/http-error";
 import { HealthRecordRepository } from "../../repositories/pet/healthrecord.repository";
 import { PetRepository } from "../../repositories/pet/pet.repository";
+import { ProviderRepository } from "../../repositories/provider/provider.repository";
+import { BookingRepository } from "../../repositories/user/booking.repository";
 
 const healthRecordRepository = new HealthRecordRepository();
 const petRepository = new PetRepository();
+const providerRepository = new ProviderRepository();
+const bookingRepository = new BookingRepository();
 
 export class HealthRecordService {
     async createHealthRecord(data: CreateHealthRecordDto, userId: string, role?: string) {
-        // Verify the pet exists and belongs to the user (or user is admin)
+        // Verify the pet exists and ownership/permission rules.
         if (!data.petId) {
             throw new HttpError(400, "Pet ID is required");
         }
@@ -16,7 +20,26 @@ export class HealthRecordService {
         if (!pet) {
             throw new HttpError(404, "Pet not found");
         }
-        if (role !== "admin" && pet.ownerId?.toString() !== userId?.toString()) {
+        if (role === "admin") {
+            return healthRecordRepository.createHealthRecord(data);
+        }
+
+        if (role === "provider") {
+            const provider = await providerRepository.getProviderById(userId);
+            if (!provider) {
+                throw new HttpError(403, "Provider not found");
+            }
+            if (provider.providerType !== "vet") {
+                throw new HttpError(403, "Only vet providers can add checkup reports");
+            }
+            const hasAuthorizedBooking = await bookingRepository.hasConfirmedVetBookingForProvider(userId, data.petId);
+            if (!hasAuthorizedBooking) {
+                throw new HttpError(403, "No confirmed/completed vet booking found for this pet");
+            }
+            return healthRecordRepository.createHealthRecord(data);
+        }
+
+        if (pet.ownerId?.toString() !== userId?.toString()) {
             throw new HttpError(403, "Forbidden: not your pet");
         }
         return healthRecordRepository.createHealthRecord(data);
