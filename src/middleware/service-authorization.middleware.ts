@@ -55,3 +55,21 @@ export function requireServiceOwnership(paramName: string = "id") {
         }
     };
 }
+
+export function requireProviderType(providerType: "shop" | "vet" | "babysitter") {
+    return (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const provider = (req as any).provider;
+            if (!provider) throw new HttpError(401, "Unauthorized");
+            if (provider.status !== "approved") {
+                throw new HttpError(403, "Provider not approved");
+            }
+            if (provider.providerType !== providerType) {
+                throw new HttpError(403, `Only ${providerType} providers can access this resource`);
+            }
+            return next();
+        } catch (err: any) {
+            return res.status(err.statusCode || 403).json({ success: false, message: err.message || "Forbidden" });
+        }
+    };
+}

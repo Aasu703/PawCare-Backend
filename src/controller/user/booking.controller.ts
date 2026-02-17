@@ -14,6 +14,10 @@ export class BookingController {
 
     async getById(req: Request, res: Response, next: NextFunction) {
         try {
+            const provider = (req as any).provider;
+            if (provider?.providerType === "shop") {
+                return res.status(403).json({ success: false, message: "Shop owners cannot access service bookings" });
+            }
             const booking = await bookingService.getBookingById(req.params.id);
             res.json(booking);
         } catch (err) { next(err); }
@@ -57,6 +61,10 @@ export class BookingController {
 
     async listByProvider(req: Request, res: Response, next: NextFunction) {
         try {
+            const provider = (req as any).provider;
+            if (provider?.providerType === "shop") {
+                return res.status(403).json({ success: false, message: "Shop owners cannot access service bookings" });
+            }
             const providerId = (req as any).provider?._id?.toString() || req.params.providerId;
             if (!providerId) return res.status(401).json({ success: false, message: "Unauthorized" });
             const page = parseInt(req.query.page as string) || 1;
@@ -68,6 +76,10 @@ export class BookingController {
 
     async updateStatus(req: Request, res: Response, next: NextFunction) {
         try {
+            const provider = (req as any).provider;
+            if (provider?.providerType === "shop") {
+                return res.status(403).json({ success: false, message: "Shop owners cannot update service bookings" });
+            }
             const providerId = (req as any).provider?._id?.toString();
             if (!providerId) return res.status(401).json({ success: false, message: "Unauthorized" });
             const { status } = req.body;

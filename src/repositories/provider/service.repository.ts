@@ -19,6 +19,15 @@ export class ServiceRepository {
     return { services, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
+  async getServicesByProviderId(providerId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const [services, total] = await Promise.all([
+      ServiceModel.find({ providerId }).skip(skip).limit(limit).exec(),
+      ServiceModel.countDocuments({ providerId }).exec(),
+    ]);
+    return { services, total, page, limit, totalPages: Math.ceil(total / limit) };
+  }
+
   async updateServiceById(id: string, updates: Partial<ServiceType>): Promise<IService | null> {
     return ServiceModel.findByIdAndUpdate(id, updates, { new: true }).exec();
   }

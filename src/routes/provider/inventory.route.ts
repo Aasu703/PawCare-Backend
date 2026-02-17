@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import inventoryController from "../../controller/provider/inventory.controller";
 import { authorizedMiddleware, providerMiddleware } from "../../middleware/authorization.middleware";
-import { requireVerifiedService } from "../../middleware/service-authorization.middleware";
+import { requireProviderType } from "../../middleware/service-authorization.middleware";
 
 const router: Router = Router();
 
@@ -11,7 +11,7 @@ router.get("/", (req: Request, res: Response) =>
 );
 
 // Create inventory item
-router.post("/", authorizedMiddleware, providerMiddleware, requireVerifiedService("shop_owner"), (req: Request, res: Response) =>
+router.post("/", authorizedMiddleware, providerMiddleware, requireProviderType("shop"), (req: Request, res: Response) =>
     inventoryController.create(req, res)
 );
 
@@ -26,12 +26,12 @@ router.get("/:id", authorizedMiddleware, providerMiddleware, (req: Request, res:
 );
 
 // Update inventory item
-router.put("/:id", authorizedMiddleware, providerMiddleware, requireVerifiedService("shop_owner"), (req: Request, res: Response) =>
+router.put("/:id", authorizedMiddleware, providerMiddleware, requireProviderType("shop"), (req: Request, res: Response) =>
     inventoryController.update(req, res)
 );
 
 // Delete inventory item
-router.delete("/:id", authorizedMiddleware, providerMiddleware, requireVerifiedService("shop_owner"), (req: Request, res: Response) =>
+router.delete("/:id", authorizedMiddleware, providerMiddleware, requireProviderType("shop"), (req: Request, res: Response) =>
     inventoryController.remove(req, res)
 );
 
