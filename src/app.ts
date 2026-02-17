@@ -3,6 +3,7 @@ import providerRouter from "./routes/provider/provider.route";
 import providerServiceRoute from './routes/provider/service.route';
 import providerInventoryRoute from './routes/provider/inventory.route';
 import providerPostRoute from './routes/provider/post.route';
+import providerBookingRoute from './routes/provider/booking.route';
 import petRouter from "./routes/pet/pet.route";
 import path from 'path';
 import admiUserRoute from './routes/admin/user.route';
@@ -160,6 +161,8 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 // Provider-managed services
 app.use('/api/provider/service', providerServiceRoute);
+// Provider booking routes (must be before generic /api/provider router)
+app.use('/api/provider/booking', providerBookingRoute);
 // Provider routes
 app.use("/api/provider", providerRouter);
 // Provider post routes

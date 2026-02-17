@@ -17,6 +17,10 @@ export class ServiceService {
     return serviceRepository.getAllServices(page, limit);
   }
 
+  async getServicesByProviderId(providerId: string, page = 1, limit = 20) {
+    return serviceRepository.getServicesByProviderId(providerId, page, limit);
+  }
+
   async updateService(id: string, updates: Partial<ServiceType>) {
     const updated = await serviceRepository.updateServiceById(id, updates);
     return updated;
