@@ -24,6 +24,7 @@ import publicPostRoute from './routes/public/post.route';
 import publicInventoryRoute from './routes/public/inventory.route';
 import reviewRoute from './routes/user/review.route';
 import messageRoute from './routes/user/message.route';
+import chatRoute from './routes/chat/chat.route';
 import healthRecordRoute from './routes/pet/healthrecord.route';
 import attachmentRoute from './routes/pet/attachment.route';
 import feedbackRoute from './routes/provider/feedback.route';
@@ -209,6 +210,8 @@ app.use('/api/product', publicInventoryRoute);
 app.use('/api/review', reviewRoute);
 // Message routes
 app.use('/api/message', messageRoute);
+// Direct chat routes (user <-> provider)
+app.use('/api/chat', chatRoute);
 // Health Record routes
 app.use('/api/health-record', healthRecordRoute);
 // Attachment routes
