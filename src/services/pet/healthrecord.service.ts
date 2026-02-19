@@ -58,9 +58,30 @@ export class HealthRecordService {
         if (!pet) {
             throw new HttpError(404, "Pet not found");
         }
-        if (role !== "admin" && pet.ownerId?.toString() !== userId?.toString()) {
+
+        if (role === "admin") {
+            return healthRecordRepository.getHealthRecordsByPetId(petId);
+        }
+
+        if (role === "provider") {
+            const provider = await providerRepository.getProviderById(userId);
+            if (!provider) {
+                throw new HttpError(403, "Provider not found");
+            }
+            if (provider.providerType !== "vet") {
+                throw new HttpError(403, "Only vet providers can view pet health records");
+            }
+            const hasAuthorizedBooking = await bookingRepository.hasConfirmedVetBookingForProvider(userId, petId);
+            if (!hasAuthorizedBooking) {
+                throw new HttpError(403, "No confirmed/completed vet booking found for this pet");
+            }
+            return healthRecordRepository.getHealthRecordsByPetId(petId);
+        }
+
+        if (pet.ownerId?.toString() !== userId?.toString()) {
             throw new HttpError(403, "Forbidden: not your pet");
         }
+
         return healthRecordRepository.getHealthRecordsByPetId(petId);
     }
 
