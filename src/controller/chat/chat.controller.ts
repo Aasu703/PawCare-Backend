@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { HttpError } from "../../errors/http-error";
 import chatService from "../../services/chat/chat.service";
 import { ChatRole } from "../../models/chat/chat-message.model";
+import { emitChatMessage } from "../../realtime/socket-server";
 
 class ChatController {
     private resolveIdentity(req: Request): { userId: string; role: ChatRole } {
@@ -103,6 +104,7 @@ class ChatController {
                 receiverId: participantId,
                 receiverRole: participantRole,
             });
+            emitChatMessage(result);
 
             return res.status(201).json({
                 success: true,

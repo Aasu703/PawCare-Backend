@@ -1,6 +1,8 @@
 import app from './app';
+import { createServer } from 'http';
 import { connectdb } from './database/mongodb';
 import { PORT } from './config';
+import { initSocketServer } from './realtime/socket-server';
 import { logger } from './utils/logger';
 
 
@@ -21,7 +23,9 @@ process.on('uncaughtException', (err) => {
 
 async function startServer() {
     await connectdb();
-    app.listen(PORT, () => {
+    const httpServer = createServer(app);
+    initSocketServer(httpServer);
+    httpServer.listen(PORT, () => {
         logger.info('server_started', { port: PORT });
     });
 }
