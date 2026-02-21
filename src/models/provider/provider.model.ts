@@ -1,5 +1,10 @@
 import mongoose, {Document, Schema} from "mongoose";
-import { ProviderType } from "../../types/provider/provider.type";
+
+export type ProviderLocation = {
+    latitude: number;
+    longitude: number;
+    address?: string;
+};
 
 const ProviderSchema: Schema = new Schema(
     {
@@ -14,28 +19,57 @@ const ProviderSchema: Schema = new Schema(
         providerType: {type: String, enum: ["shop", "vet", "babysitter"], default: null},
         status: {type: String, enum: ["pending", "approved", "rejected"], default: "pending"},
         certification: { type: String, default: "" },
+        certificationDocumentUrl: { type: String, default: "" },
         experience: { type: String, default: "" },
         clinicOrShopName: { type: String, default: "" },
         panNumber: { type: String, default: "" },
+        location: {
+            type: new Schema(
+                {
+                    latitude: { type: Number, min: -90, max: 90 },
+                    longitude: { type: Number, min: -180, max: 180 },
+                    address: { type: String, default: "" },
+                },
+                { _id: false }
+            ),
+            default: undefined,
+        },
+        locationUpdatedAt: { type: Date, default: null },
+        locationVerified: { type: Boolean, default: false },
+        locationVerifiedAt: { type: Date, default: null },
+        locationVerifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+        pawcareVerified: { type: Boolean, default: false },
     },
     {
         timestamps: true,
     }
 );
 
-ProviderSchema.index({ status: 1, providerType: 1, createdAt: -1 });
+ProviderSchema.index({ status: 1, providerType: 1, pawcareVerified: 1, createdAt: -1 });
 
-export interface IProvider extends ProviderType, Document {
+export interface IProvider extends Document {
     _id: mongoose.Types.ObjectId;
+    businessName: string;
+    address: string;
+    phone?: string;
+    rating?: number;
+    userId?: mongoose.Types.ObjectId | string | null;
     email: string;
     password: string;
     role: "provider";
     providerType?: "shop" | "vet" | "babysitter";
     status: "pending" | "approved" | "rejected";
     certification?: string;
+    certificationDocumentUrl?: string;
     experience?: string;
     clinicOrShopName?: string;
     panNumber?: string;
+    location?: ProviderLocation;
+    locationUpdatedAt?: Date | null;
+    locationVerified?: boolean;
+    locationVerifiedAt?: Date | null;
+    locationVerifiedBy?: mongoose.Types.ObjectId | string | null;
+    pawcareVerified?: boolean;
     createdAt?: string;
     updatedAt?: string;
 }

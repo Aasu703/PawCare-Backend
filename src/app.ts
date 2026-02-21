@@ -28,6 +28,7 @@ import chatRoute from './routes/chat/chat.route';
 import healthRecordRoute from './routes/pet/healthrecord.route';
 import attachmentRoute from './routes/pet/attachment.route';
 import feedbackRoute from './routes/provider/feedback.route';
+import uploadRoute from './routes/upload.route';
 import express, { Application, Request, Response, NextFunction } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -220,6 +221,8 @@ app.use('/api/attachment', attachmentRoute);
 app.use('/api/feedback', feedbackRoute);
 // Provider Inventory routes
 app.use('/api/provider/inventory', providerInventoryRoute);
+// Generic upload routes
+app.use('/api/upload', uploadRoute);
 
 // Error handling middleware
 app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {

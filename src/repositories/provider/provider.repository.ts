@@ -10,6 +10,10 @@ export class ProviderRepository {
             email: data.email,
             password: data.password,
             providerType: (data as any).providerType || null,
+            location: (data as any).location || undefined,
+            locationUpdatedAt: (data as any).location ? new Date() : null,
+            locationVerified: false,
+            pawcareVerified: false,
             status: "pending",
         });
         return provider;
