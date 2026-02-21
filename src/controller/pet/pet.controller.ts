@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import z from "zod";
-import { CreatePetDto, UpdatePetDto } from "../../dtos/pet/pet.dto";
+import { CreatePetDto, UpdatePetCareDto, UpdatePetDto } from "../../dtos/pet/pet.dto";
 import { PetService } from "../../services/pet/pet.service";
 
 const petService = new PetService();
@@ -81,6 +81,40 @@ export class PetController {
             }
             const pet = await petService.updatePet(petId, ownerId, parsed.data, role);
             return res.status(200).json({ success: true, message: "Pet updated", data: pet });
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
+        }
+    }
+
+    async getPetCare(req: Request, res: Response) {
+        try {
+            const ownerId = req.user?._id;
+            const role = req.user?.role;
+            if (!ownerId) {
+                return res.status(401).json({ success: false, message: "Unauthorized" });
+            }
+            const petId = req.params.id;
+            const care = await petService.getPetCare(petId, ownerId, role);
+            return res.status(200).json({ success: true, data: care });
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
+        }
+    }
+
+    async updatePetCare(req: Request, res: Response) {
+        try {
+            const ownerId = req.user?._id;
+            const role = req.user?.role;
+            if (!ownerId) {
+                return res.status(401).json({ success: false, message: "Unauthorized" });
+            }
+            const petId = req.params.id;
+            const parsed = UpdatePetCareDto.safeParse(req.body);
+            if (!parsed.success) {
+                return res.status(400).json({ success: false, message: z.prettifyError(parsed.error) });
+            }
+            const care = await petService.updatePetCare(petId, ownerId, parsed.data, role);
+            return res.status(200).json({ success: true, message: "Pet care updated", data: care });
         } catch (error: Error | any) {
             return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
         }

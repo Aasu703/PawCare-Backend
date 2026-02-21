@@ -25,11 +25,23 @@ router.get(
     (req, res) => petController.getPetById(req, res)
 );
 
+router.get(
+    "/:id/care",
+    authorizedMiddleware,
+    (req, res) => petController.getPetCare(req, res)
+);
+
 router.put(
     "/:id",
     authorizedMiddleware,
     uploads.single("image"),
     (req, res) => petController.updatePet(req, res)
+);
+
+router.put(
+    "/:id/care",
+    authorizedMiddleware,
+    (req, res) => petController.updatePetCare(req, res)
 );
 
 router.delete(

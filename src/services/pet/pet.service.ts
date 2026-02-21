@@ -1,10 +1,20 @@
-import { CreatePetDto, UpdatePetDto } from "../../dtos/pet/pet.dto";
+import { CreatePetDto, UpdatePetCareDto, UpdatePetDto } from "../../dtos/pet/pet.dto";
 import { HttpError } from "../../errors/http-error";
 import { PetRepository } from "../../repositories/pet/pet.repository";
 
 const petRepository = new PetRepository();
 
 export class PetService {
+    private normalizePetCare(pet: any) {
+        const care = pet?.care || {};
+        return {
+            feedingTimes: Array.isArray(care.feedingTimes) ? care.feedingTimes : [],
+            vaccinations: Array.isArray(care.vaccinations) ? care.vaccinations : [],
+            notes: typeof care.notes === "string" ? care.notes : "",
+            updatedAt: care.updatedAt || null,
+        };
+    }
+
     async createPet(ownerId: string, data: CreatePetDto) {
         if (!ownerId) {
             throw new HttpError(400, "Owner ID is required");
@@ -48,6 +58,23 @@ export class PetService {
             throw new HttpError(404, "Pet not found");
         }
         return updated;
+    }
+
+    async getPetCare(petId: string, ownerId: string, role?: string) {
+        const pet = await this.getPetById(petId, ownerId, role);
+        return this.normalizePetCare(pet);
+    }
+
+    async updatePetCare(petId: string, ownerId: string, data: UpdatePetCareDto, role?: string) {
+        const existing = await this.getPetById(petId, ownerId, role);
+        if (!existing) {
+            throw new HttpError(404, "Pet not found");
+        }
+        const updated = await petRepository.updatePetCareById(petId, data);
+        if (!updated) {
+            throw new HttpError(404, "Pet not found");
+        }
+        return this.normalizePetCare(updated);
     }
 
     async deletePet(petId: string, ownerId: string, role?: string) {
