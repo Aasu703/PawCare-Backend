@@ -2,7 +2,7 @@ import { CreateProviderDTO, LoginProviderDTO } from "../../dtos/provider/provide
 import bcryptjs from "bcryptjs";
 import { HttpError } from "../../errors/http-error";
 import jwt from "jsonwebtoken";
-import { JWT_ACCESS_EXPIRES_IN, JWT_SECRET } from "../../config";
+import {  JWT_SECRET } from "../../config";
 import { ProviderRepository } from "../../repositories/provider/provider.repository";
 
 const providerRepository = new ProviderRepository();
@@ -52,7 +52,7 @@ export class ProviderService {
             status: newProvider.status || "pending",
         };
 
-        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"] });
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "30d" });
         return { token, provider: this.sanitizeProvider(newProvider as unknown as Record<string, any>) };
     }
 
@@ -76,7 +76,7 @@ export class ProviderService {
             status: provider.status || "pending",
         };
 
-        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"] });
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
         return { token, provider: this.sanitizeProvider(provider as unknown as Record<string, any>) };
     }
 

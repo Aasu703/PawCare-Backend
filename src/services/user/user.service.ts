@@ -2,7 +2,7 @@ import { CreateUserDTO, LoginUserDTO, UpdateUserDto } from "../../dtos/user/user
 import bcryptjs from "bcryptjs";
 import { HttpError } from "../../errors/http-error";
 import jwt from "jsonwebtoken";
-import { JWT_ACCESS_EXPIRES_IN, JWT_SECRET, RESET_TOKEN_EXPIRES_IN } from "../../config";
+import {  JWT_SECRET, } from "../../config";
 import { UserRepository } from "../../repositories/user/user.repository";
 
 
@@ -46,7 +46,7 @@ export class UserService {
             role: user.role,
             phone:user.phone
         }
-        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"] });
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "30d" });
         return { token, user: this.sanitizeUser(user as unknown as Record<string, any>) };
     }
 
@@ -99,7 +99,7 @@ export class UserService {
         if (!user) {
             throw new HttpError(404, "User not found");
         }
-        const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: RESET_TOKEN_EXPIRES_IN as jwt.SignOptions["expiresIn"] });
+        const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "1h" });
         const resetLink = `${CLIENT_URL}/reset-password?token=${token}`;
         const html = `<p>Click <a href="${resetLink}">here</a> to reset your password. This link will expire in 1 hour.</p>`;
         await sendEmail(user.email, "Password Reset", html);

@@ -32,18 +32,16 @@ import uploadRoute from './routes/upload.route';
 import express, { Application, Request, Response, NextFunction } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import cookieParser from 'cookie-parser';
-import { de } from 'zod/v4/locales';
-import multer from 'multer';
-import { responseStandardizer } from './utils/api-response';
 import orderRoute from './routes/user/order.route';
 import cartRoute from './routes/user/cart.route';
 import { HttpError } from './errors/http-error';
+import { success } from 'zod';
 
 const app: Application = express();
 
 let corsOptions = {
     origin:["http://localhost:3000", "http://localhost:3001", "http://localhost:3003"],
+    optionsSuccessStatus: 200,
     credentials: true, // Allow cookies to be sent
     // list of domains allowed to access the server
     // frontend domain/url
@@ -55,104 +53,10 @@ app.use(cors(corsOptions));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); // Serve static files from uploads directory
 
 // app.use(cors());
-app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Standardize all JSON responses to { success, message, data/error }
-app.use(responseStandardizer);
 
-// Request/response logging middleware
-app.use((req: Request, res: Response, next) => {
-    const startTime = Date.now();
-    const originalJson = res.json.bind(res);
-    let responseBody: unknown;
-
-    const redact = (obj: any): any => {
-        if (obj === null || obj === undefined) return obj;
-        if (Array.isArray(obj)) return obj.map(redact);
-        if (typeof obj !== 'object') return obj;
-        const redacted: any = {};
-        for (const [k, v] of Object.entries(obj)) {
-            const key = k.toLowerCase();
-            if (key.includes('password') || key === 'pwd' || key === 'pass' || key === 'token') {
-                redacted[k] = '***';
-            } else if (typeof v === 'object') {
-                redacted[k] = redact(v);
-            } else {
-                redacted[k] = v;
-            }
-        }
-        return redacted;
-    };
-
-    const redactEnabled = process.env.LOG_REDACT !== 'false';
-
-    res.json = (body: unknown) => {
-        responseBody = body;
-        return originalJson(body);
-    };
-
-    res.on('finish', () => {
-        const durationMs = Date.now() - startTime;
-        const logPayload: Record<string, unknown> = {
-            method: req.method,
-            url: req.originalUrl,
-            statusCode: res.statusCode,
-            durationMs,
-            request: {},
-            response: responseBody,
-        };
-
-        try {
-            if (req.body && Object.keys(req.body).length) {
-                (logPayload.request as any).body = redactEnabled ? redact(req.body) : req.body;
-            }
-        } catch {}
-
-        try {
-            if (req.params && Object.keys(req.params).length) {
-                (logPayload.request as any).params = req.params;
-            }
-        } catch {}
-
-        try {
-            if (req.query && Object.keys(req.query as any).length) {
-                (logPayload.request as any).query = req.query;
-            }
-        } catch {}
-
-        if (responseBody && typeof responseBody === 'object') {
-            const bodyObj = responseBody as Record<string, unknown>;
-            if ('success' in bodyObj) logPayload.success = bodyObj.success;
-            if ('message' in bodyObj) logPayload.message = bodyObj.message;
-        }
-
-        try {
-            console.log('[HTTP]', JSON.stringify(logPayload));
-        } catch {
-            console.log('[HTTP]', logPayload);
-        }
-
-        // Also print full response payload (redacted unless LOG_REDACT=false)
-        try {
-            const respToLog = redactEnabled && typeof responseBody === 'object' ? redact(responseBody) : responseBody;
-            try {
-                console.log('[RESPONSE PAYLOAD]', JSON.stringify(respToLog, null, 2));
-            } catch {
-                console.log('[RESPONSE PAYLOAD]', respToLog);
-            }
-        } catch {}
-
-        if ((logPayload as any).success) {
-            try {
-                console.log('[SUCCESS]', req.method, req.originalUrl, '-', (logPayload as any).message || 'OK');
-            } catch {}
-        }
-    });
-
-    next();
-});
 
 // Health check route
 app.get('/', (req: Request, res: Response) => {
@@ -224,34 +128,13 @@ app.use('/api/feedback', feedbackRoute);
 // Generic upload routes
 app.use('/api/upload', uploadRoute);
 
-// Error handling middleware
-app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
+
+
+app.use((err: Error, req: Request, res: Response, next: Function) => {
     if (err instanceof HttpError) {
-        return res.status(err.statusCode || 400).json({
-            success: false,
-            message: err.message || "Bad Request"
-        });
+        return res.status(err.statusCode).json({ success: false, message: err.message});
     }
-
-    if (err instanceof multer.MulterError) {
-        return res.status(400).json({
-            success: false,
-            message: err.message || "File upload error"
-        });
-    }
-
-    if (err instanceof Error) {
-        return res.status(500).json({
-            success: false,
-            message: err.message || "Internal Server Error"
-        });
-    }
-
-    return res.status(500).json({
-        success: false,
-        message: "Internal Server Error"
-    });
+    return res.status(500).json({ success: false, message:err.message || 'Internal Server Error' });
 });
-
 
 export default app;
