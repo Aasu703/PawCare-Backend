@@ -17,7 +17,11 @@ export class InventoryRepository {
     async getAllInventory(page: number = 1, limit: number = 10) {
         const skip = (page - 1) * limit;
         const [items, total] = await Promise.all([
-            InventoryModel.find().skip(skip).limit(limit).exec(),
+            InventoryModel.find()
+                .sort({ createdAt: -1, _id: -1 })
+                .skip(skip)
+                .limit(limit)
+                .exec(),
             InventoryModel.countDocuments().exec()
         ]);
         return { items, total, page, limit, totalPages: Math.ceil(total / limit) };

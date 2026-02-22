@@ -1,13 +1,22 @@
 import mongoose from "mongoose";
 import { MONGO_URI } from "../config";
-import { logger } from "../utils/logger";
 
 export async function connectdb() {
     try {
         await mongoose.connect(MONGO_URI);
-        logger.info("database_connected", { mongoUri: MONGO_URI.replace(/\/\/.*@/, "//***:***@") });
-    } catch (error) {
-        logger.error("database_connection_failed", { error: error instanceof Error ? error.message : error as unknown as string });
-        process.exit(1); 
+        console.log("Connected to MongoDB");
+    } catch (err) {
+        console.error("Failed to connect to MongoDB", err);
+        process.exit(1);
+    }
+}
+
+export async function connectdbTest() {
+    try {
+        await mongoose.connect(MONGO_URI + "_test");
+        console.log("Connected to MongoDB Test Database");
+    } catch (err) {
+        console.error("Failed to connect to MongoDB Test Database", err);
+        process.exit(1);
     }
 }

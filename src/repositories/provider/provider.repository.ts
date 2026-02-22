@@ -10,6 +10,10 @@ export class ProviderRepository {
             email: data.email,
             password: data.password,
             providerType: (data as any).providerType || null,
+            location: (data as any).location || undefined,
+            locationUpdatedAt: (data as any).location ? new Date() : null,
+            locationVerified: false,
+            pawcareVerified: false,
             status: "pending",
         });
         return provider;
@@ -45,5 +49,27 @@ export class ProviderRepository {
 
     async getProvidersByStatus(status: string): Promise<IProvider[]> {
         return ProviderModel.find({ status }).exec();
+    }
+
+    async getVerifiedProvidersWithLocation(providerType?: "shop" | "vet") {
+        const filter: Record<string, unknown> = {
+            status: "approved",
+            pawcareVerified: true,
+            locationVerified: true,
+            "location.latitude": { $exists: true },
+            "location.longitude": { $exists: true },
+        };
+
+        if (providerType) {
+            filter.providerType = providerType;
+        }
+
+        return ProviderModel.find(filter)
+            .select(
+                "_id businessName clinicOrShopName providerType address rating location locationVerified pawcareVerified"
+            )
+            .sort({ locationUpdatedAt: -1, createdAt: -1, _id: -1 })
+            .lean()
+            .exec();
     }
 }

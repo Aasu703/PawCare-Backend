@@ -1,6 +1,31 @@
 import mongoose, { Document, Schema } from "mongoose";
 import { PetType } from "../../types/pet/pet.type";
 
+const PetVaccinationSchema = new Schema(
+    {
+        vaccine: { type: String, required: true },
+        recommendedByMonths: { type: Number, required: false },
+        dosesTaken: { type: Number, required: true, default: 0 },
+        status: {
+            type: String,
+            enum: ["pending", "done", "not_required"],
+            required: true,
+            default: "pending",
+        },
+    },
+    { _id: false }
+);
+
+const PetCareSchema = new Schema(
+    {
+        feedingTimes: { type: [String], required: true, default: [] },
+        vaccinations: { type: [PetVaccinationSchema], required: true, default: [] },
+        notes: { type: String, required: false },
+        updatedAt: { type: Date, required: false },
+    },
+    { _id: false }
+);
+
 const PetSchema: Schema = new Schema<PetType>(
     {
         name: { type: String, required: true },
@@ -11,6 +36,11 @@ const PetSchema: Schema = new Schema<PetType>(
         imageUrl: { type: String, required: false },
         allergies: { type: String, required: false },
         dietNotes: { type: String, required: false },
+        care: {
+            type: PetCareSchema,
+            required: false,
+            default: () => ({ feedingTimes: [], vaccinations: [] }),
+        },
         ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
     },
     {

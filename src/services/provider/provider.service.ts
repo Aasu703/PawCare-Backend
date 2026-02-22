@@ -2,16 +2,33 @@ import { CreateProviderDTO, LoginProviderDTO } from "../../dtos/provider/provide
 import bcryptjs from "bcryptjs";
 import { HttpError } from "../../errors/http-error";
 import jwt from "jsonwebtoken";
-import { JWT_ACCESS_EXPIRES_IN, JWT_SECRET } from "../../config";
+import {  JWT_SECRET } from "../../config";
 import { ProviderRepository } from "../../repositories/provider/provider.repository";
 
 const providerRepository = new ProviderRepository();
+type ProviderKind = "shop" | "vet" | "babysitter";
+type ProviderLocationInput = {
+    latitude: number;
+    longitude: number;
+    address?: string;
+};
+type VerifiedLocationProviderType = "shop" | "vet";
 
 export class ProviderService {
     private sanitizeProvider(provider: Record<string, any>) {
         const plain = typeof provider.toObject === "function" ? provider.toObject() : provider;
         const { password, ...safeProvider } = plain;
         return safeProvider;
+    }
+
+    private requiresLocationVerification(providerType?: string | null) {
+        return providerType === "shop" || providerType === "vet";
+    }
+
+    private hasPinnedLocation(provider: Record<string, any>) {
+        const lat = Number(provider?.location?.latitude);
+        const lng = Number(provider?.location?.longitude);
+        return Number.isFinite(lat) && Number.isFinite(lng);
     }
 
     async createProvider(data: CreateProviderDTO) {
@@ -35,7 +52,7 @@ export class ProviderService {
             status: newProvider.status || "pending",
         };
 
-        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"] });
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "30d" });
         return { token, provider: this.sanitizeProvider(newProvider as unknown as Record<string, any>) };
     }
 
@@ -59,7 +76,7 @@ export class ProviderService {
             status: provider.status || "pending",
         };
 
-        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"] });
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
         return { token, provider: this.sanitizeProvider(provider as unknown as Record<string, any>) };
     }
 
@@ -94,22 +111,54 @@ export class ProviderService {
     async setProviderType(
         id: string,
         payload: {
-            providerType: "shop" | "vet" | "babysitter";
+            providerType: ProviderKind;
             certification?: string;
+            certificationDocumentUrl?: string;
             experience?: string;
             clinicOrShopName?: string;
             panNumber?: string;
+            location?: ProviderLocationInput;
         }
     ) {
-        const { providerType, certification, experience, clinicOrShopName, panNumber } = payload;
+        const {
+            providerType,
+            certification,
+            certificationDocumentUrl,
+            experience,
+            clinicOrShopName,
+            panNumber,
+            location
+        } = payload;
         const updates: Record<string, any> = {
             providerType,
             status: "pending",
             certification: certification || "",
+            certificationDocumentUrl: certificationDocumentUrl || "",
             experience: experience || "",
             clinicOrShopName: clinicOrShopName || "",
             panNumber: panNumber || "",
         };
+
+        if (location) {
+            updates.location = {
+                latitude: location.latitude,
+                longitude: location.longitude,
+                address: location.address || "",
+            };
+            updates.locationUpdatedAt = new Date();
+        }
+
+        if (this.requiresLocationVerification(providerType)) {
+            updates.locationVerified = false;
+            updates.locationVerifiedAt = null;
+            updates.locationVerifiedBy = null;
+            updates.pawcareVerified = false;
+        } else {
+            updates.locationVerified = false;
+            updates.locationVerifiedAt = null;
+            updates.locationVerifiedBy = null;
+            updates.pawcareVerified = false;
+        }
 
         const provider = await providerRepository.updateProviderById(id, updates);
         if (!provider) {
@@ -134,8 +183,37 @@ export class ProviderService {
         return provider;
     }
 
-    async approveProvider(id: string) {
-        const provider = await providerRepository.updateProviderById(id, { status: "approved" });
+    async approveProvider(id: string, adminId?: string) {
+        const current = await providerRepository.getProviderById(id);
+        if (!current) {
+            throw new HttpError(404, "Provider not found");
+        }
+
+        const shouldVerifyLocation = this.requiresLocationVerification(current.providerType);
+        if (shouldVerifyLocation && !this.hasPinnedLocation(current as unknown as Record<string, any>)) {
+            throw new HttpError(
+                400,
+                "Pinned map location is required before approving a shop or vet provider"
+            );
+        }
+
+        const updates: Record<string, any> = {
+            status: "approved",
+        };
+
+        if (shouldVerifyLocation) {
+            updates.locationVerified = true;
+            updates.locationVerifiedAt = new Date();
+            updates.locationVerifiedBy = adminId || null;
+            updates.pawcareVerified = true;
+        } else {
+            updates.locationVerified = false;
+            updates.locationVerifiedAt = null;
+            updates.locationVerifiedBy = null;
+            updates.pawcareVerified = false;
+        }
+
+        const provider = await providerRepository.updateProviderById(id, updates);
         if (!provider) {
             throw new HttpError(404, "Provider not found");
         }
@@ -143,7 +221,13 @@ export class ProviderService {
     }
 
     async rejectProvider(id: string) {
-        const provider = await providerRepository.updateProviderById(id, { status: "rejected" });
+        const provider = await providerRepository.updateProviderById(id, {
+            status: "rejected",
+            locationVerified: false,
+            locationVerifiedAt: null,
+            locationVerifiedBy: null,
+            pawcareVerified: false,
+        });
         if (!provider) {
             throw new HttpError(404, "Provider not found");
         }
@@ -156,5 +240,40 @@ export class ProviderService {
 
     async getProvidersByStatus(status: string) {
         return providerRepository.getProvidersByStatus(status);
+    }
+
+    async getVerifiedProviderLocations(providerType?: string) {
+        const normalizedType: VerifiedLocationProviderType | undefined =
+            providerType === "shop" || providerType === "vet" ? providerType : undefined;
+
+        const providers = await providerRepository.getVerifiedProvidersWithLocation(normalizedType);
+        return providers
+            .filter((provider: any) => {
+                const latitude = Number(provider?.location?.latitude);
+                const longitude = Number(provider?.location?.longitude);
+                return (
+                    Number.isFinite(latitude) &&
+                    Number.isFinite(longitude) &&
+                    latitude >= -90 &&
+                    latitude <= 90 &&
+                    longitude >= -180 &&
+                    longitude <= 180
+                );
+            })
+            .map((provider: any) => ({
+                _id: provider._id,
+                businessName: provider.businessName,
+                clinicOrShopName: provider.clinicOrShopName,
+                providerType: provider.providerType,
+                address: provider.address || "",
+                rating: provider.rating || 0,
+                location: {
+                    latitude: Number(provider.location.latitude),
+                    longitude: Number(provider.location.longitude),
+                    address: provider.location.address || "",
+                },
+                locationVerified: Boolean(provider.locationVerified),
+                pawcareVerified: Boolean(provider.pawcareVerified),
+            }));
     }
 }

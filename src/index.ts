@@ -1,28 +1,13 @@
-import app from './app';
-import { connectdb } from './database/mongodb';
-import { PORT } from './config';
-import { logger } from './utils/logger';
+import app from "./app";
+import { connectdb } from "./database/mongodb";
 
+import { PORT} from "./config";
 
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-    logger.error('unhandled_rejection', {
-        reason: reason instanceof Error ? reason.message : String(reason),
-    });
-    process.exit(1);
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (err) => {
-    logger.error('uncaught_exception', { error: err.message });
-    process.exit(1);
-});
-
+// Starting the MongoDB connection and then the server
 async function startServer() {
     await connectdb();
     app.listen(PORT, () => {
-        logger.info('server_started', { port: PORT });
+        console.log(`Server is running on port ${PORT}`);
     });
 }
 

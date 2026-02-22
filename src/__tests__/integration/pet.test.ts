@@ -48,7 +48,7 @@ describe('Pet Integration Tests', () => {
         petId = res.body.data?._id || res.body.data?.id;
     });
 
-    test('PUT /api/user/pet/:id should update pet and DELETE should remove it', async () => {
+    test('PUT /api/user/pet/:id should update pet', async () => {
         const update = await request(app)
             .put(`/api/user/pet/${petId}`)
             .set('Authorization', `Bearer ${token}`)
@@ -56,17 +56,47 @@ describe('Pet Integration Tests', () => {
         expect(update.status).toBe(200);
         expect(update.body).toHaveProperty('data');
         expect(update.body.data).toHaveProperty('name', 'Updated Pet');
+    });
 
-        const del = await request(app)
-            .delete(`/api/user/pet/${petId}`)
+    test('PUT /api/user/pet/:id/care and GET /api/user/pet/:id/care should manage pet care', async () => {
+        const carePayload = {
+            feedingTimes: ['08:00', '18:30'],
+            vaccinations: [
+                { vaccine: 'Rabies', recommendedByMonths: 3, dosesTaken: 1, status: 'done' },
+                { vaccine: 'DHPP', recommendedByMonths: 2, dosesTaken: 0, status: 'pending' },
+            ],
+            notes: 'Needs reminder for booster shots.',
+        };
+
+        const updateCare = await request(app)
+            .put(`/api/user/pet/${petId}/care`)
+            .set('Authorization', `Bearer ${token}`)
+            .send(carePayload);
+        expect(updateCare.status).toBe(200);
+        expect(updateCare.body).toHaveProperty('message', 'Pet care updated');
+        expect(updateCare.body.data).toHaveProperty('feedingTimes');
+        expect(updateCare.body.data.feedingTimes).toContain('08:00');
+
+        const getCare = await request(app)
+            .get(`/api/user/pet/${petId}/care`)
             .set('Authorization', `Bearer ${token}`);
-        expect(del.status).toBe(200);
-        expect(del.body).toHaveProperty('message');
+        expect(getCare.status).toBe(200);
+        expect(getCare.body).toHaveProperty('data');
+        expect(getCare.body.data).toHaveProperty('vaccinations');
+        expect(Array.isArray(getCare.body.data.vaccinations)).toBeTruthy();
     });
 
     test('GET /api/user/pet should list user pets', async () => {
         const res = await request(app).get('/api/user/pet').set('Authorization', `Bearer ${token}`);
         expect(res.status).toBe(200);
         expect(Array.isArray(res.body.data)).toBeTruthy();
+    });
+
+    test('DELETE /api/user/pet/:id should remove pet', async () => {
+        const del = await request(app)
+            .delete(`/api/user/pet/${petId}`)
+            .set('Authorization', `Bearer ${token}`);
+        expect(del.status).toBe(200);
+        expect(del.body).toHaveProperty('message');
     });
 });
