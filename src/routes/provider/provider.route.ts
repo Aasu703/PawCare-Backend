@@ -21,6 +21,7 @@ router.put("/reject/:id", authorizedMiddleware, adminMiddleware, (req, res) => p
 router.get("/status/:status", authorizedMiddleware, adminMiddleware, (req, res) => providerController.getProvidersByStatus(req, res));
 
 // CRUD routes
+router.get("/verified-locations", (req, res) => providerController.getVerifiedLocations(req, res));
 router.get("/", (req, res) => providerController.getAllProviders(req, res));
 router.get("/:id", (req, res) => providerController.getProvider(req, res));
 router.put("/:id", (req, res) => providerController.updateProvider(req, res));

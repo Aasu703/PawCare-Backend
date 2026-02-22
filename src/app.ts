@@ -163,12 +163,14 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 // Provider-managed services
 app.use('/api/provider/service', providerServiceRoute);
+// Provider inventory routes
+app.use('/api/provider/inventory', providerInventoryRoute);
 // Provider booking routes (must be before generic /api/provider router)
 app.use('/api/provider/booking', providerBookingRoute);
-// Provider routes
-app.use("/api/provider", providerRouter);
 // Provider post routes
 app.use('/api/provider/post', providerPostRoute);
+// Provider routes
+app.use("/api/provider", providerRouter);
 // User Pet routes
 app.use("/api/user/pet", petRouter);
 // Admin User routes
@@ -219,8 +221,6 @@ app.use('/api/health-record', healthRecordRoute);
 app.use('/api/attachment', attachmentRoute);
 // Feedback routes
 app.use('/api/feedback', feedbackRoute);
-// Provider Inventory routes
-app.use('/api/provider/inventory', providerInventoryRoute);
 // Generic upload routes
 app.use('/api/upload', uploadRoute);
 

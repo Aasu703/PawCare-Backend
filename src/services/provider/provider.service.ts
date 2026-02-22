@@ -12,6 +12,7 @@ type ProviderLocationInput = {
     longitude: number;
     address?: string;
 };
+type VerifiedLocationProviderType = "shop" | "vet";
 
 export class ProviderService {
     private sanitizeProvider(provider: Record<string, any>) {
@@ -239,5 +240,40 @@ export class ProviderService {
 
     async getProvidersByStatus(status: string) {
         return providerRepository.getProvidersByStatus(status);
+    }
+
+    async getVerifiedProviderLocations(providerType?: string) {
+        const normalizedType: VerifiedLocationProviderType | undefined =
+            providerType === "shop" || providerType === "vet" ? providerType : undefined;
+
+        const providers = await providerRepository.getVerifiedProvidersWithLocation(normalizedType);
+        return providers
+            .filter((provider: any) => {
+                const latitude = Number(provider?.location?.latitude);
+                const longitude = Number(provider?.location?.longitude);
+                return (
+                    Number.isFinite(latitude) &&
+                    Number.isFinite(longitude) &&
+                    latitude >= -90 &&
+                    latitude <= 90 &&
+                    longitude >= -180 &&
+                    longitude <= 180
+                );
+            })
+            .map((provider: any) => ({
+                _id: provider._id,
+                businessName: provider.businessName,
+                clinicOrShopName: provider.clinicOrShopName,
+                providerType: provider.providerType,
+                address: provider.address || "",
+                rating: provider.rating || 0,
+                location: {
+                    latitude: Number(provider.location.latitude),
+                    longitude: Number(provider.location.longitude),
+                    address: provider.location.address || "",
+                },
+                locationVerified: Boolean(provider.locationVerified),
+                pawcareVerified: Boolean(provider.pawcareVerified),
+            }));
     }
 }

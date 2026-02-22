@@ -157,6 +157,23 @@ export class ProviderController {
         }
     }
 
+    async getVerifiedLocations(req: Request, res: Response) {
+        try {
+            const rawProviderType = `${req.query?.providerType || req.query?.type || ""}`
+                .trim()
+                .toLowerCase();
+            const providerType = rawProviderType === "shop" || rawProviderType === "vet"
+                ? rawProviderType
+                : undefined;
+            const providers = await providerService.getVerifiedProviderLocations(providerType);
+            return res.status(200).json({ success: true, data: providers });
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json(
+                { success: false, message: error.message || "Internal Server Error" }
+            );
+        }
+    }
+
     async updateProvider(req: Request, res: Response) {
         try {
             const { id } = req.params;
