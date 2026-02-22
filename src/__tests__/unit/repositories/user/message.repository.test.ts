@@ -17,8 +17,7 @@ describe("MessageRepository", () => {
     describe("createMessage", () => {
         it("should create a new message successfully", async () => {
             const createMessageDto: CreateMessageDto = {
-                content: "Test message",
-                receiverId: "receiver123"
+                content: "Test message"
             };
 
             const mockMessage = {

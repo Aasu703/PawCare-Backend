@@ -22,17 +22,11 @@ describe("OrderRepository", () => {
                         productId: "prod123",
                         productName: "Product 1",
                         quantity: 2,
-                        price: 10.99,
-                        providerId: "provider123"
+                        price: 10.99
                     }
                 ],
                 totalAmount: 21.98,
-                shippingAddress: {
-                    street: "123 Main St",
-                    city: "City",
-                    state: "State",
-                    zipCode: "12345"
-                }
+                shippingAddress: "123 Main St, City, State 12345"
             };
 
             const mockOrder = {

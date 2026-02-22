@@ -1,6 +1,6 @@
 import { PetRepository } from "../../../../repositories/pet/pet.repository";
 import { PetModel } from "../../../../models/pet/pet.model";
-import { CreatePetDto, UpdatePetDto, UpdatePet CareDto } from "../../../../dtos/pet/pet.dto";
+import { CreatePetDto, UpdatePetDto, UpdatePetCareDto } from "../../../../dtos/pet/pet.dto";
 
 jest.mock("../../../../models/pet/pet.model");
 
@@ -131,8 +131,8 @@ describe("PetRepository", () => {
     describe("updatePetCareById", () => {
         it("should update pet care information with all fields", async () => {
             const updates: UpdatePetCareDto = {
-                feedingTimes: ["8:00 AM", "6:00 PM"],
-                vaccinations: [{ name: "Rabies", date: "2024-01-01" }],
+                feedingTimes: ["08:00", "18:00"],
+                vaccinations: [{ vaccine: "Rabies", dosesTaken: 1, status: "done" }],
                 notes: "Special care needed"
             };
 

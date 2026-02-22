@@ -19,8 +19,7 @@ describe("AttachmentRepository", () => {
             const createAttachmentDto: CreateAttachmentDto = {
                 healthRecordId: "recordId123",
                 fileName: "xray.jpg",
-                fileUrl: "https://example.com/files/xray.jpg",
-                fileType: "image/jpeg"
+                fileUrl: "https://example.com/files/xray.jpg"
             };
 
             const mockAttachment = {

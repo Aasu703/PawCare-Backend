@@ -19,7 +19,8 @@ describe("ReviewRepository", () => {
             const createReviewDto: CreateReviewDto = {
                 rating: 5,
                 comment: "Excellent service!",
-                providerId: "provider123"
+                providerId: "provider123",
+                reviewType: "provider"
             };
 
             const mockReview = {

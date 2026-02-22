@@ -20,6 +20,7 @@ describe("UserRepository", () => {
             const createUserDTO: CreateUserDTO = {
                 email: "test@example.com",
                 password: "hashedPassword",
+                confirmPassword: "hashedPassword",
                 Firstname: "John",
                 Lastname: "Doe",
                 phone: "1234567890",
@@ -35,7 +36,14 @@ describe("UserRepository", () => {
 
             const result = await userRepository.createUser(createUserDTO);
 
-            expect(mockUserModel.create).toHaveBeenCalledWith(createUserDTO);
+            expect(mockUserModel.create).toHaveBeenCalledWith({
+                email: createUserDTO.email,
+                password: createUserDTO.password,
+                Firstname: createUserDTO.Firstname,
+                Lastname: createUserDTO.Lastname,
+                phone: createUserDTO.phone,
+                role: createUserDTO.role
+            });
             expect(result).toEqual(mockUser);
         });
     });

@@ -19,9 +19,9 @@ describe("HealthRecordRepository", () => {
             const createHealthRecordDto: CreateHealthRecordDto = {
                 petId: "petId123",
                 date: "2024-01-15",
-                type: "checkup",
-                description: "Annual checkup",
-                veterinarian: "Dr. Smith"
+                recordType: "checkup",
+                title: "Annual Checkup",
+                description: "Annual checkup"
             };
 
             const mockHealthRecord = {
@@ -117,8 +117,7 @@ describe("HealthRecordRepository", () => {
     describe("updateHealthRecordById", () => {
         it("should update health record successfully", async () => {
             const updates: UpdateHealthRecordDto = {
-                description: "Updated description",
-                veterinarian: "Dr. Johnson"
+                description: "Updated description"
             };
 
             const mockUpdatedRecord = {
