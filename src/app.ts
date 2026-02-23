@@ -35,7 +35,8 @@ import cors from 'cors';
 import orderRoute from './routes/user/order.route';
 import cartRoute from './routes/user/cart.route';
 import { HttpError } from './errors/http-error';
-import { success } from 'zod';
+import morgan from 'morgan';
+
 
 const app: Application = express();
 
@@ -55,7 +56,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); // Serv
 // app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
+app.use(morgan("dev"));
 
 
 // Health check route
@@ -127,6 +128,18 @@ app.use('/api/attachment', attachmentRoute);
 app.use('/api/feedback', feedbackRoute);
 // Generic upload routes
 app.use('/api/upload', uploadRoute);
+
+// installed a request logger middleware to log incoming requests and their responses. This will help in debugging and monitoring the API usage.
+app.use((req, res, next) => {
+  console.log("Incoming Request:", req.method, req.url);
+
+  res.on("finish", () => {
+    console.log("Response Status:", res.statusCode);
+  });
+
+  next();
+});
+
 
 
 
