@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { BookingModel } from "../../models/user/booking.model";
 import { ProviderModel } from "../../models/provider/provider.model";
 import { UserModel } from "../../models/user/user.model";
+import { PetModel } from "../../models/pet/pet.model";
 import {
     ChatMessageModel,
     ChatRole,
@@ -343,10 +344,24 @@ export class ChatRepository {
         currentRole: ChatRole;
     }): Promise<ChatContact[]> {
         if (params.currentRole === "provider") {
-            const userIds = await BookingModel.distinct("userId", {
-                providerId: params.currentUserId,
-                userId: { $ne: null },
-            });
+            const [bookingUserIds, assignedOwnerIds] = await Promise.all([
+                BookingModel.distinct("userId", {
+                    providerId: params.currentUserId,
+                    userId: { $ne: null },
+                }),
+                PetModel.distinct("ownerId", {
+                    assignedVetId: params.currentUserId,
+                    ownerId: { $ne: null },
+                }),
+            ]);
+
+            const userIds = Array.from(
+                new Set(
+                    [...bookingUserIds, ...assignedOwnerIds]
+                        .map((value: any) => value?.toString?.() || value)
+                        .filter(Boolean),
+                ),
+            );
 
             if (userIds.length === 0) return [];
 
@@ -367,10 +382,24 @@ export class ChatRepository {
             });
         }
 
-        const providerIds = await BookingModel.distinct("providerId", {
-            userId: params.currentUserId,
-            providerId: { $ne: null },
-        });
+        const [bookingProviderIds, assignedProviderIds] = await Promise.all([
+            BookingModel.distinct("providerId", {
+                userId: params.currentUserId,
+                providerId: { $ne: null },
+            }),
+            PetModel.distinct("assignedVetId", {
+                ownerId: params.currentUserId,
+                assignedVetId: { $ne: null },
+            }),
+        ]);
+
+        const providerIds = Array.from(
+            new Set(
+                [...bookingProviderIds, ...assignedProviderIds]
+                    .map((value: any) => value?.toString?.() || value)
+                    .filter(Boolean),
+            ),
+        );
 
         if (providerIds.length === 0) return [];
 

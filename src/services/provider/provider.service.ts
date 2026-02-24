@@ -88,8 +88,12 @@ export class ProviderService {
         return provider;
     }
 
-    async getAllProviders() {
-        return providerRepository.getAllProviders();
+    async getAllProviders(filters?: {
+        providerType?: string;
+        status?: string;
+        pawcareVerified?: boolean;
+    }) {
+        return providerRepository.getAllProviders(filters);
     }
 
     async updateProvider(id: string, updates: Record<string, any>) {

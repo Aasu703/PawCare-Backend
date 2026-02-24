@@ -4,6 +4,7 @@ import providerServiceRoute from './routes/provider/service.route';
 import providerInventoryRoute from './routes/provider/inventory.route';
 import providerPostRoute from './routes/provider/post.route';
 import providerBookingRoute from './routes/provider/booking.route';
+import providerPetRoute from './routes/provider/pet.route';
 import petRouter from "./routes/pet/pet.route";
 import path from 'path';
 import admiUserRoute from './routes/admin/user.route';
@@ -77,6 +78,8 @@ app.use('/api/provider/inventory', providerInventoryRoute);
 app.use('/api/provider/booking', providerBookingRoute);
 // Provider post routes
 app.use('/api/provider/post', providerPostRoute);
+// Provider pet routes (vet assigned pets)
+app.use('/api/provider/pet', providerPetRoute);
 // Provider routes
 app.use("/api/provider", providerRouter);
 // User Pet routes

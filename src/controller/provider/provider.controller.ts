@@ -146,7 +146,17 @@ export class ProviderController {
 
     async getAllProviders(req: Request, res: Response) {
         try {
-            const providers = await providerService.getAllProviders();
+            const providerType = typeof req.query?.providerType === "string" ? req.query.providerType : undefined;
+            const status = typeof req.query?.status === "string" ? req.query.status : undefined;
+            const pawcareVerified = typeof req.query?.pawcareVerified === "string"
+                ? req.query.pawcareVerified === "true"
+                : undefined;
+
+            const providers = await providerService.getAllProviders({
+                providerType,
+                status,
+                pawcareVerified,
+            });
             return res.status(200).json(
                 { success: true, data: providers }
             );

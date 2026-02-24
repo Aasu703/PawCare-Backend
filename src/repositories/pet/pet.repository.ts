@@ -15,7 +15,9 @@ export class PetRepository {
     }
 
     async getPetsByOwnerId(ownerId: string): Promise<IPet[]> {
-        return PetModel.find({ ownerId }).exec();
+        return PetModel.find({ ownerId })
+            .populate("assignedVetId", "_id businessName clinicOrShopName providerType pawcareVerified status")
+            .exec();
     }
 
     async getAllPets(): Promise<IPet[]> {
@@ -52,5 +54,14 @@ export class PetRepository {
 
     async deletePetById(petId: string): Promise<IPet | null> {
         return PetModel.findByIdAndDelete(petId).exec();
+    }
+
+    async getPetsByAssignedVetId(vetId: string): Promise<any[]> {
+        return PetModel.find({ assignedVetId: vetId })
+            .populate("ownerId", "_id Firstname Lastname email imageUrl")
+            .populate("assignedVetId", "_id businessName clinicOrShopName providerType pawcareVerified status")
+            .sort({ assignedAt: -1, updatedAt: -1 })
+            .lean()
+            .exec();
     }
 }

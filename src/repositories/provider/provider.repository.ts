@@ -35,8 +35,26 @@ export class ProviderRepository {
         return ProviderModel.findByIdAndDelete(id).exec();
     }
 
-    async getAllProviders(): Promise<IProvider[]> {
-        return ProviderModel.find().exec();
+    async getAllProviders(filters?: {
+        providerType?: string;
+        status?: string;
+        pawcareVerified?: boolean;
+    }): Promise<IProvider[]> {
+        const query: Record<string, unknown> = {};
+
+        if (filters?.providerType) {
+            query.providerType = filters.providerType;
+        }
+
+        if (filters?.status) {
+            query.status = filters.status;
+        }
+
+        if (typeof filters?.pawcareVerified === "boolean") {
+            query.pawcareVerified = filters.pawcareVerified;
+        }
+
+        return ProviderModel.find(query).exec();
     }
 
     async getProviderByUserId(userId: string): Promise<IProvider | null> {

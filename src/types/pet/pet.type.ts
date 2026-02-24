@@ -29,6 +29,8 @@ export const PetSchema = z.object({
     imageUrl: z.string().optional(),
     ownerId: z.string().optional()
     ,
+    assignedVetId: z.string().optional().nullable(),
+    assignedAt: z.coerce.date().optional().nullable(),
     allergies: z.string().optional(),
     dietNotes: z.string().optional(),
     care: PetCareSchema.optional(),

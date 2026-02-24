@@ -39,6 +39,12 @@ router.put(
 );
 
 router.put(
+    "/:id/assign-vet",
+    authorizedMiddleware,
+    (req, res) => petController.assignVet(req, res)
+);
+
+router.put(
     "/:id/care",
     authorizedMiddleware,
     (req, res) => petController.updatePetCare(req, res)

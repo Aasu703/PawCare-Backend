@@ -41,7 +41,9 @@ const PetSchema: Schema = new Schema<PetType>(
             required: false,
             default: () => ({ feedingTimes: [], vaccinations: [] }),
         },
-        ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
+        ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+        assignedVetId: { type: mongoose.Schema.Types.ObjectId, ref: "Provider", default: null, index: true },
+        assignedAt: { type: Date, default: null },
     },
     {
         timestamps: true,
@@ -50,6 +52,7 @@ const PetSchema: Schema = new Schema<PetType>(
 
 PetSchema.index({ ownerId: 1, createdAt: -1 });
 PetSchema.index({ species: 1 });
+PetSchema.index({ assignedVetId: 1, assignedAt: -1, updatedAt: -1 });
 
 export interface IPet extends PetType, Document {
     _id: mongoose.Types.ObjectId;

@@ -16,7 +16,7 @@ export const CreatePetDto = PetSchema.pick({
 
 export type CreatePetDto = z.infer<typeof CreatePetDto>;
 
-export const UpdatePetDto = PetSchema.partial().omit({ ownerId: true });
+export const UpdatePetDto = PetSchema.partial().omit({ ownerId: true, assignedAt: true });
 export type UpdatePetDto = z.infer<typeof UpdatePetDto>;
 
 export const UpdatePetCareDto = z.object({
