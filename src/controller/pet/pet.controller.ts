@@ -17,7 +17,7 @@ export class PetController {
                 return res.status(400).json({ success: false, message: z.prettifyError(parsed.error) });
             }
             if (req.file) {
-                parsed.data.imageUrl = `/uploads/${req.file.filename}`;
+                parsed.data.imageUrl = `/uploads/image/${req.file.filename}`;
             }
             const pet = await petService.createPet(ownerId, parsed.data);
             return res.status(201).json({ success: true, message: "Pet created", data: pet });
@@ -77,7 +77,7 @@ export class PetController {
                 return res.status(400).json({ success: false, message: z.prettifyError(parsed.error) });
             }
             if (req.file) {
-                parsed.data.imageUrl = `/uploads/${req.file.filename}`;
+                parsed.data.imageUrl = `/uploads/image/${req.file.filename}`;
             }
             const pet = await petService.updatePet(petId, ownerId, parsed.data, role);
             return res.status(200).json({ success: true, message: "Pet updated", data: pet });

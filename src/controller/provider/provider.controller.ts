@@ -97,7 +97,7 @@ export class ProviderController {
                 providerData.location = parsedRegisterLocation;
             }
             if (req.file) {
-                providerData.imageUrl = `/uploads/${req.file.filename}`;
+                providerData.imageUrl = `/uploads/image/${req.file.filename}`;
             }
             const { token, provider } = await providerService.createProvider(providerData);
             return res.status(201).json(

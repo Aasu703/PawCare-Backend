@@ -51,7 +51,10 @@ let corsOptions = {
 // origin: "*", allow all domians
 app.use(cors(corsOptions));
 
-app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); // Serve static files from uploads directory
+app.use("/uploads/image", express.static(path.join(process.cwd(), "uploads/image")));
+app.use("/uploads/documents", express.static(path.join(process.cwd(), "uploads/documents")));
+
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // app.use(cors());
 app.use(bodyParser.json());

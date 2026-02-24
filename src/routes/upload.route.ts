@@ -14,7 +14,7 @@ router.post('/upload-profile-image', authorizedMiddleware, uploads.single('profi
         message: 'Profile image uploaded successfully.',
         data: {
             filename: req.file.filename,
-            path: `/uploads/${req.file.filename}`,
+            path: `/uploads/image/${req.file.filename}`,
         },
     });
 });
@@ -36,7 +36,7 @@ router.post(
             data: {
                 filename: req.file.filename,
                 originalname: req.file.originalname,
-                path: `/uploads/${req.file.filename}`,
+                path: `/uploads/documents/${req.file.filename}`,
                 mimetype: req.file.mimetype,
                 size: req.file.size,
             },
