@@ -5,7 +5,8 @@ const FeedbackSchema: Schema = new Schema(
     {
         feedback: { type: String, required: true },
         providerId: { type: mongoose.Schema.Types.ObjectId, ref: "Provider", required: true, index: true },
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false, index: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false, index: true },
+        bookingId: { type: mongoose.Schema.Types.ObjectId, ref: "Booking", required: false, index: true },
     },
     {
         timestamps: true,
@@ -13,6 +14,7 @@ const FeedbackSchema: Schema = new Schema(
 );
 
 FeedbackSchema.index({ providerId: 1, createdAt: -1 });
+FeedbackSchema.index({ providerId: 1, bookingId: 1 }, { unique: true, sparse: true });
 
 FeedbackSchema.virtual("id").get(function (this: IFeedback) {
     return this._id.toHexString();

@@ -5,6 +5,7 @@ export const FeedbackSchema = z.object({
     feedback: z.string().min(1),
     providerId: z.string().optional(),
     userId: z.string().optional(),
+    bookingId: z.string().optional(),
     createdAt: z.string().optional()
 });
 
