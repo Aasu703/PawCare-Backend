@@ -23,6 +23,12 @@ const ProviderSchema: Schema = new Schema(
         experience: { type: String, default: "" },
         clinicOrShopName: { type: String, default: "" },
         panNumber: { type: String, default: "" },
+        bio: { type: String, default: "" },
+        degree: { type: String, default: "" },
+        profileImageUrl: { type: String, default: "" },
+        appointmentFee: { type: Number, default: 0 },
+        ratingCount: { type: Number, default: 0 },
+        workingHours: { type: String, default: "Monday - Friday at 8:00 am - 5:00pm" },
         location: {
             type: new Schema(
                 {
@@ -64,6 +70,12 @@ export interface IProvider extends Document {
     experience?: string;
     clinicOrShopName?: string;
     panNumber?: string;
+    bio?: string;
+    degree?: string;
+    profileImageUrl?: string;
+    appointmentFee?: number;
+    ratingCount?: number;
+    workingHours?: string;
     location?: ProviderLocation;
     locationUpdatedAt?: Date | null;
     locationVerified?: boolean;

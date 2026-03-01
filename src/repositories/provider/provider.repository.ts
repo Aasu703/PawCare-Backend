@@ -84,7 +84,7 @@ export class ProviderRepository {
 
         return ProviderModel.find(filter)
             .select(
-                "_id businessName clinicOrShopName providerType address rating location locationVerified pawcareVerified"
+                "_id businessName clinicOrShopName providerType address rating ratingCount bio degree profileImageUrl appointmentFee workingHours experience certification location locationVerified pawcareVerified"
             )
             .sort({ locationUpdatedAt: -1, createdAt: -1, _id: -1 })
             .lean()

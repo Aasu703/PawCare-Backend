@@ -94,6 +94,14 @@ export class ReviewService {
         return reviewRepository.getReviewsByProviderId(providerId, page, limit);
     }
 
+    async getEnrichedReviewsByProviderId(providerId: string, page: number = 1, limit: number = 10) {
+        return reviewRepository.getEnrichedReviewsByProviderId(providerId, page, limit);
+    }
+
+    async getRatingBreakdownByProviderId(providerId: string) {
+        return reviewRepository.getRatingBreakdownByProviderId(providerId);
+    }
+
     async getReviewsByProductId(productId: string, page: number = 1, limit: number = 10) {
         return reviewRepository.getReviewsByProductId(productId, page, limit);
     }

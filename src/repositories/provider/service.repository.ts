@@ -7,13 +7,13 @@ export class ServiceRepository {
   }
 
   async getServiceById(id: string): Promise<IService | null> {
-    return ServiceModel.findById(id).exec();
+    return ServiceModel.findById(id).populate('providerId', '-password').exec();
   }
 
   async getAllServices(page = 1, limit = 20) {
     const skip = (page - 1) * limit;
     const [services, total] = await Promise.all([
-      ServiceModel.find().skip(skip).limit(limit).exec(),
+      ServiceModel.find().populate('providerId', '-password').skip(skip).limit(limit).exec(),
       ServiceModel.countDocuments().exec(),
     ]);
     return { services, total, page, limit, totalPages: Math.ceil(total / limit) };
@@ -22,7 +22,7 @@ export class ServiceRepository {
   async getServicesByProviderId(providerId: string, page = 1, limit = 20) {
     const skip = (page - 1) * limit;
     const [services, total] = await Promise.all([
-      ServiceModel.find({ providerId }).skip(skip).limit(limit).exec(),
+      ServiceModel.find({ providerId }).populate('providerId', '-password').skip(skip).limit(limit).exec(),
       ServiceModel.countDocuments({ providerId }).exec(),
     ]);
     return { services, total, page, limit, totalPages: Math.ceil(total / limit) };

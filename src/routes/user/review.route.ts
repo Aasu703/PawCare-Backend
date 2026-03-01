@@ -24,6 +24,11 @@ router.get("/provider/:providerId/rating", (req: Request, res: Response) =>
     reviewController.getProviderRating(req, res)
 );
 
+// Get provider rating breakdown (public)
+router.get("/provider/:providerId/rating-breakdown", (req: Request, res: Response) =>
+    reviewController.getProviderRatingBreakdown(req, res)
+);
+
 // Get reviews by product (public)
 router.get("/product/:productId", (req: Request, res: Response) =>
     reviewController.getByProduct(req, res)

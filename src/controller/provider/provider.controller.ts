@@ -322,11 +322,23 @@ export class ProviderController {
                 "experience",
                 "clinicOrShopName",
                 "panNumber",
+                "bio",
+                "degree",
+                "profileImageUrl",
+                "workingHours",
             ];
 
             for (const field of allowedFields) {
                 if (typeof req.body?.[field] === "string") {
                     updates[field] = req.body[field].trim();
+                }
+            }
+
+            // Handle numeric fields
+            if (req.body?.appointmentFee !== undefined) {
+                const fee = Number(req.body.appointmentFee);
+                if (Number.isFinite(fee) && fee >= 0) {
+                    updates.appointmentFee = fee;
                 }
             }
 
