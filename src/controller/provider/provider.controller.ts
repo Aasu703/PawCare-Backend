@@ -375,21 +375,36 @@ export class ProviderController {
                 updates.location = parsedLocation;
                 updates.locationUpdatedAt = new Date();
 
+                // Only reset location verification for shop/vet providers
+                // Keep pawcareVerified and status unchanged so provider can continue working
                 if (["shop", "vet"].includes((currentProvider as any).providerType || "")) {
-                    updates.locationVerified = false;
-                    updates.locationVerifiedAt = null;
-                    updates.locationVerifiedBy = null;
-                    updates.pawcareVerified = false;
-                    updates.status = "pending";
+                    const currentLocationLat = (currentProvider as any).location?.latitude;
+                    const currentLocationLng = (currentProvider as any).location?.longitude;
+                    const locationChanged = 
+                        currentLocationLat !== parsedLocation.latitude ||
+                        currentLocationLng !== parsedLocation.longitude;
+
+                    // Only require re-verification if location actually changed
+                    if (locationChanged) {
+                        updates.locationVerified = false;
+                        updates.locationVerifiedAt = null;
+                        updates.locationVerifiedBy = null;
+                        // DON'T reset pawcareVerified or status - provider stays approved
+                    }
                 }
             }
 
             const provider = await providerService.updateProviderProfile(providerId, updates);
+            
+            // Determine response message based on what was updated
+            let message = "Provider profile updated successfully";
+            if (hasLocationPayload && updates.locationVerified === false) {
+                message = "Profile updated. Location change will be reviewed by admin, but you can continue using your account.";
+            }
+            
             return res.status(200).json({
                 success: true,
-                message: updates.status === "pending"
-                    ? "Provider profile updated. Location is pending admin verification"
-                    : "Provider profile updated",
+                message: message,
                 data: this.sanitizeProvider(provider as any),
             });
         } catch (error: Error | any) {
