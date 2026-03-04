@@ -2,9 +2,11 @@ import { Request, Response } from "express";
 import { InventoryService } from "../../services/provider/inventory.service";
 import { CreateInventoryDto, UpdateInventoryDto } from "../../dtos/provider/inventory.dto";
 import { HttpError } from "../../errors/http-error";
+import { ProviderRepository } from "../../repositories/provider/provider.repository";
 import z from "zod";
 
 const inventoryService = new InventoryService();
+const providerRepo = new ProviderRepository();
 
 const PaginationSchema = z.object({
     page: z.coerce.number().int().min(1).default(1),
@@ -20,13 +22,29 @@ export class ProviderInventoryController {
             const userId = req.user?._id;
             if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
+            const providerId = req.body.providerId;
+            if (!providerId) return res.status(400).json({ success: false, message: "Provider ID is required" });
+
+            // Get provider to check verification status
+            const provider = await providerRepo.getProviderById(providerId);
+            if (!provider) return res.status(404).json({ success: false, message: "Provider not found" });
+
+            const isPawcareVerified = (provider as any).pawcareVerified === true;
+
             // Provider creates inventory scoped to their provider
-            const parsed = CreateInventoryDto.safeParse({ ...req.body, providerId: req.body.providerId });
+            const parsed = CreateInventoryDto.safeParse({ 
+                ...req.body, 
+                providerId,
+                approvalStatus: isPawcareVerified ? 'approved' : 'pending',
+            });
             if (!parsed.success) {
                 return res.status(400).json({ success: false, message: formatZodError(parsed.error) });
             }
             const item = await inventoryService.createInventory(parsed.data);
-            return res.status(201).json({ success: true, message: "Inventory item created", data: item });
+            const message = isPawcareVerified 
+                ? "Inventory item created and approved" 
+                : "Inventory item created and pending admin approval";
+            return res.status(201).json({ success: true, message, data: item });
         } catch (error: unknown) {
             if (error instanceof z.ZodError) {
                 return res.status(400).json({ success: false, message: formatZodError(error) });
@@ -99,12 +117,29 @@ export class ProviderInventoryController {
 
     async update(req: Request, res: Response) {
         try {
-            const parsed = UpdateInventoryDto.safeParse(req.body);
+            const providerId = req.body.providerId;
+            
+            // Get provider to check verification status
+            let isPawcareVerified = false;
+            if (providerId) {
+                const provider = await providerRepo.getProviderById(providerId);
+                if (provider) {
+                    isPawcareVerified = (provider as any).pawcareVerified === true;
+                }
+            }
+
+            const parsed = UpdateInventoryDto.safeParse({
+                ...req.body,
+                approvalStatus: isPawcareVerified ? 'approved' : 'pending',
+            });
             if (!parsed.success) {
                 return res.status(400).json({ success: false, message: formatZodError(parsed.error) });
             }
             const item = await inventoryService.updateInventory(req.params.id, parsed.data);
-            return res.status(200).json({ success: true, message: "Inventory item updated", data: item });
+            const message = isPawcareVerified 
+                ? "Inventory item updated and approved" 
+                : "Inventory item updated and pending admin approval";
+            return res.status(200).json({ success: true, message, data: item });
         } catch (error: unknown) {
             if (error instanceof z.ZodError) {
                 return res.status(400).json({ success: false, message: formatZodError(error) });

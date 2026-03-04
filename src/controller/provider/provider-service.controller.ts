@@ -13,7 +13,7 @@ const collectDocumentPaths = (files: Record<string, Express.Multer.File[]> | und
     const paths: string[] = [];
     Object.values(files).forEach((fileList) => {
         fileList.forEach((file) => {
-            paths.push(`/uploads/${file.filename}`);
+            paths.push(`/uploads/documents/${file.filename}`);
         });
     });
     return paths;

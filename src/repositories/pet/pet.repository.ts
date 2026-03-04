@@ -1,4 +1,4 @@
-import { CreatePetDto, UpdatePetDto } from "../../dtos/pet/pet.dto";
+import { CreatePetDto, UpdatePetCareDto, UpdatePetDto } from "../../dtos/pet/pet.dto";
 import { IPet, PetModel } from "../../models/pet/pet.model";
 
 export class PetRepository {
@@ -15,7 +15,9 @@ export class PetRepository {
     }
 
     async getPetsByOwnerId(ownerId: string): Promise<IPet[]> {
-        return PetModel.find({ ownerId }).exec();
+        return PetModel.find({ ownerId })
+            .populate("assignedVetId", "_id businessName clinicOrShopName providerType pawcareVerified status")
+            .exec();
     }
 
     async getAllPets(): Promise<IPet[]> {
@@ -26,7 +28,40 @@ export class PetRepository {
         return PetModel.findByIdAndUpdate(petId, updates, { new: true }).exec();
     }
 
+    async updatePetCareById(petId: string, updates: UpdatePetCareDto): Promise<IPet | null> {
+        const patch: Record<string, unknown> = {
+            "care.updatedAt": new Date(),
+        };
+
+        if (Array.isArray(updates.feedingTimes)) {
+            patch["care.feedingTimes"] = updates.feedingTimes;
+        }
+
+        if (Array.isArray(updates.vaccinations)) {
+            patch["care.vaccinations"] = updates.vaccinations;
+        }
+
+        if (typeof updates.notes !== "undefined") {
+            patch["care.notes"] = updates.notes;
+        }
+
+        return PetModel.findByIdAndUpdate(
+            petId,
+            { $set: patch },
+            { new: true },
+        ).exec();
+    }
+
     async deletePetById(petId: string): Promise<IPet | null> {
         return PetModel.findByIdAndDelete(petId).exec();
+    }
+
+    async getPetsByAssignedVetId(vetId: string): Promise<any[]> {
+        return PetModel.find({ assignedVetId: vetId })
+            .populate("ownerId", "_id Firstname Lastname email imageUrl")
+            .populate("assignedVetId", "_id businessName clinicOrShopName providerType pawcareVerified status")
+            .sort({ assignedAt: -1, updatedAt: -1 })
+            .lean()
+            .exec();
     }
 }

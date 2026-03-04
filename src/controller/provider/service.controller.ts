@@ -12,6 +12,7 @@ export class ProviderServiceController {
       const provider = await providerRepo.getProviderById(providerId);
       if (!provider) return res.status(404).json({ success: false, message: "Provider not found" });
       const providerType = (provider as any).providerType;
+      const isPawcareVerified = (provider as any).pawcareVerified === true;
 
       if (providerType === "shop") {
         return res.status(403).json({ success: false, message: "Shop owners cannot create service bookings" });
@@ -21,6 +22,7 @@ export class ProviderServiceController {
         ...req.body,
         providerId,
         category: req.body.category || req.body.catergory,
+        approvalStatus: isPawcareVerified ? 'approved' : 'pending',
       };
 
       if (providerType === "vet") {
@@ -35,7 +37,10 @@ export class ProviderServiceController {
       }
 
       const service = await ServiceService.createService(payload as any);
-      return res.status(201).json(service);
+      const message = isPawcareVerified 
+        ? "Service created and approved" 
+        : "Service created and pending admin approval";
+      return res.status(201).json({ ...service, message });
     } catch (err: any) {
       return res.status(err.status || 500).json({ success: false, message: err.message });
     }
@@ -86,12 +91,17 @@ export class ProviderServiceController {
       const provider = await providerRepo.getProviderById(providerId);
       if (!provider) return res.status(404).json({ success: false, message: "Provider not found" });
       const providerType = (provider as any).providerType;
+      const isPawcareVerified = (provider as any).pawcareVerified === true;
 
       if (providerType === "shop") {
         return res.status(403).json({ success: false, message: "Shop owners cannot update service bookings" });
       }
 
-      const updates = { ...req.body, category: req.body.category || req.body.catergory } as any;
+      const updates = { 
+        ...req.body, 
+        category: req.body.category || req.body.catergory,
+        approvalStatus: isPawcareVerified ? 'approved' : 'pending',
+      } as any;
 
       if (providerType === "vet") {
         if (updates.category && updates.category !== "vet") {
@@ -105,7 +115,10 @@ export class ProviderServiceController {
       }
 
       const updated = await ServiceService.updateServiceForProvider(providerId, req.params.id, updates as any);
-      return res.json(updated);
+      const message = isPawcareVerified 
+        ? "Service updated and approved" 
+        : "Service updated and pending admin approval";
+      return res.json({ ...updated, message });
     } catch (err: any) {
       return res.status(err.status || 500).json({ success: false, message: err.message });
     }

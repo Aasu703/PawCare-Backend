@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import z from "zod";
-import { CreatePetDto, UpdatePetDto } from "../../dtos/pet/pet.dto";
+import { CreatePetDto, UpdatePetCareDto, UpdatePetDto } from "../../dtos/pet/pet.dto";
 import { PetService } from "../../services/pet/pet.service";
 
 const petService = new PetService();
@@ -17,7 +17,7 @@ export class PetController {
                 return res.status(400).json({ success: false, message: z.prettifyError(parsed.error) });
             }
             if (req.file) {
-                parsed.data.imageUrl = `/uploads/${req.file.filename}`;
+                parsed.data.imageUrl = `/uploads/image/${req.file.filename}`;
             }
             const pet = await petService.createPet(ownerId, parsed.data);
             return res.status(201).json({ success: true, message: "Pet created", data: pet });
@@ -77,10 +77,62 @@ export class PetController {
                 return res.status(400).json({ success: false, message: z.prettifyError(parsed.error) });
             }
             if (req.file) {
-                parsed.data.imageUrl = `/uploads/${req.file.filename}`;
+                parsed.data.imageUrl = `/uploads/image/${req.file.filename}`;
             }
             const pet = await petService.updatePet(petId, ownerId, parsed.data, role);
             return res.status(200).json({ success: true, message: "Pet updated", data: pet });
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
+        }
+    }
+
+    async assignVet(req: Request, res: Response) {
+        try {
+            const ownerId = req.user?._id;
+            const role = req.user?.role;
+            if (!ownerId) {
+                return res.status(401).json({ success: false, message: "Unauthorized" });
+            }
+
+            const petId = req.params.id;
+            const rawVetId = req.body?.vetId;
+            const vetId = typeof rawVetId === "string" ? rawVetId : null;
+            const pet = await petService.assignVet(petId, ownerId, vetId, role);
+            return res.status(200).json({ success: true, message: "Vet assignment updated", data: pet });
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
+        }
+    }
+
+    async getPetCare(req: Request, res: Response) {
+        try {
+            const ownerId = req.user?._id;
+            const role = req.user?.role;
+            if (!ownerId) {
+                return res.status(401).json({ success: false, message: "Unauthorized" });
+            }
+            const petId = req.params.id;
+            const care = await petService.getPetCare(petId, ownerId, role);
+            return res.status(200).json({ success: true, data: care });
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
+        }
+    }
+
+    async updatePetCare(req: Request, res: Response) {
+        try {
+            const ownerId = req.user?._id;
+            const role = req.user?.role;
+            if (!ownerId) {
+                return res.status(401).json({ success: false, message: "Unauthorized" });
+            }
+            const petId = req.params.id;
+            const parsed = UpdatePetCareDto.safeParse(req.body);
+            if (!parsed.success) {
+                return res.status(400).json({ success: false, message: z.prettifyError(parsed.error) });
+            }
+            const care = await petService.updatePetCare(petId, ownerId, parsed.data, role);
+            return res.status(200).json({ success: true, message: "Pet care updated", data: care });
         } catch (error: Error | any) {
             return res.status(error.statusCode ?? 500).json({ success: false, message: error.message || "Internal Server Error" });
         }

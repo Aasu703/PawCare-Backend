@@ -2,12 +2,13 @@ import { Request, Response, NextFunction } from "express";
 import { HttpError } from "../errors/http-error";
 import ProviderServiceService from "../services/provider/provider-service.service";
 
-const providerServiceService = new ProviderServiceService();
+const providerServiceService = new ProviderServiceService(); // Import the service to check provider services
 
 const getUserId = (req: Request) =>
-    (req.user as any)?.userId || (req.user as any)?._id?.toString();
+    (req.user as any)?.userId || (req.user as any)?._id?.toString(); // Helper to get user ID from request
 
 export function requireRole(role: string) {
+    // Middleware to require a specific user role (e.g. "admin", "provider")
     return (req: Request, res: Response, next: NextFunction) => {
         try {
             const user = req.user as any;
@@ -22,9 +23,10 @@ export function requireRole(role: string) {
 
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
     return requireRole("admin")(req, res, next);
-}
+} // Middleware to require admin role
 
 export function requireVerifiedService(serviceType: string) {
+    // Middleware to require that the user has an approved provider service of a specific type (e.g. "shop", "vet", "babysitter")
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
             const userId = getUserId(req);
@@ -39,6 +41,7 @@ export function requireVerifiedService(serviceType: string) {
 }
 
 export function requireServiceOwnership(paramName: string = "id") {
+    // Middleware to require that the user owns the provider service application they are trying to access (used for provider service management routes)
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
             const userId = getUserId(req);
@@ -57,6 +60,7 @@ export function requireServiceOwnership(paramName: string = "id") {
 }
 
 export function requireProviderType(providerType: "shop" | "vet" | "babysitter") {
+    // Middleware to require that the user has an approved provider service of a specific type to access certain routes (e.g. only approved vets can access vet-related routes)
     return (req: Request, res: Response, next: NextFunction) => {
         try {
             const provider = (req as any).provider;

@@ -167,10 +167,18 @@ export class BookingRepository {
     }
 
     async hasConfirmedVetBookingForProvider(providerId: string, petId: string): Promise<boolean> {
+        const providerServiceIds = await ServiceModel.find({ providerId }).distinct("_id");
+        const providerServiceIdStrings = providerServiceIds
+            .map((id: any) => id?.toString?.() || id)
+            .filter(Boolean);
+
         const bookings = await BookingModel.find({
-            providerId,
             petId,
             status: { $in: ["confirmed", "completed"] },
+            $or: [
+                { providerId },
+                { serviceId: { $in: providerServiceIdStrings } },
+            ],
         }).select("serviceId").lean();
 
         if (!bookings.length) return false;

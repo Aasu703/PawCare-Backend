@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from "mongoose";
 import { ServiceType } from "../../types/provider/service.type";
 
-const ServiceSchema: Schema = new Schema<ServiceType>(
+const ServiceSchema: Schema = new Schema(
   {
     title: { type: String, required: true },
     description: { type: String },
@@ -9,7 +9,8 @@ const ServiceSchema: Schema = new Schema<ServiceType>(
     duration_minutes: { type: Number, required: true },
     category: { type: String, enum: ['grooming', 'boarding', 'vet'] },
     availability: [{ type: String }],
-    providerId: { type: Schema.Types.ObjectId, ref: 'Provider' }
+    providerId: { type: Schema.Types.ObjectId, ref: 'Provider' },
+    approvalStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   },
   { timestamps: true }
 );

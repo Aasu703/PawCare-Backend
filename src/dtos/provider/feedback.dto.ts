@@ -3,10 +3,14 @@ import { FeedbackSchema } from "../../types/provider/feedback.type";
 
 export const CreateFeedbackDto = FeedbackSchema.pick({
     feedback: true,
-    providerId: true
+    providerId: true,
+    userId: true,
+    bookingId: true,
+}).extend({
+    userId: z.string().min(1, "userId is required"),
 });
 
 export type CreateFeedbackDto = z.infer<typeof CreateFeedbackDto>;
 
-export const UpdateFeedbackDto = FeedbackSchema.partial().omit({ id: true, providerId: true, userId: true });
+export const UpdateFeedbackDto = FeedbackSchema.partial().omit({ id: true, providerId: true, userId: true, bookingId: true });
 export type UpdateFeedbackDto = z.infer<typeof UpdateFeedbackDto>;

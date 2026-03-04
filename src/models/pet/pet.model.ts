@@ -1,6 +1,31 @@
 import mongoose, { Document, Schema } from "mongoose";
 import { PetType } from "../../types/pet/pet.type";
 
+const PetVaccinationSchema = new Schema(
+    {
+        vaccine: { type: String, required: true },
+        recommendedByMonths: { type: Number, required: false },
+        dosesTaken: { type: Number, required: true, default: 0 },
+        status: {
+            type: String,
+            enum: ["pending", "done", "not_required"],
+            required: true,
+            default: "pending",
+        },
+    },
+    { _id: false }
+);
+
+const PetCareSchema = new Schema(
+    {
+        feedingTimes: { type: [String], required: true, default: [] },
+        vaccinations: { type: [PetVaccinationSchema], required: true, default: [] },
+        notes: { type: String, required: false },
+        updatedAt: { type: Date, required: false },
+    },
+    { _id: false }
+);
+
 const PetSchema: Schema = new Schema<PetType>(
     {
         name: { type: String, required: true },
@@ -11,7 +36,14 @@ const PetSchema: Schema = new Schema<PetType>(
         imageUrl: { type: String, required: false },
         allergies: { type: String, required: false },
         dietNotes: { type: String, required: false },
-        ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
+        care: {
+            type: PetCareSchema,
+            required: false,
+            default: () => ({ feedingTimes: [], vaccinations: [] }),
+        },
+        ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+        assignedVetId: { type: mongoose.Schema.Types.ObjectId, ref: "Provider", default: null, index: true },
+        assignedAt: { type: Date, default: null },
     },
     {
         timestamps: true,
@@ -20,6 +52,7 @@ const PetSchema: Schema = new Schema<PetType>(
 
 PetSchema.index({ ownerId: 1, createdAt: -1 });
 PetSchema.index({ species: 1 });
+PetSchema.index({ assignedVetId: 1, assignedAt: -1, updatedAt: -1 });
 
 export interface IPet extends PetType, Document {
     _id: mongoose.Types.ObjectId;

@@ -1,14 +1,15 @@
 import mongoose, { Document, Schema } from "mongoose";
 import { InventoryType } from "../../types/provider/inventory.type";
 
-const InventorySchema: Schema = new Schema<InventoryType>(
+const InventorySchema: Schema = new Schema(
     {
         product_name: { type: String, required: true },
         description: { type: String, required: false },
         quantity: { type: Number, default: 0 },
         price: { type: Number, required: false },
         category: { type: String, required: false },
-        providerId: { type: mongoose.Schema.Types.ObjectId, ref: "Provider", required: true }
+        providerId: { type: mongoose.Schema.Types.ObjectId, ref: "Provider", required: true },
+        approvalStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
     },
     {
         timestamps: true,

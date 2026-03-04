@@ -7,7 +7,8 @@ export const InventorySchema = z.object({
     price: z.coerce.number().nonnegative().optional(),
     quantity: z.coerce.number().int().nonnegative().optional(),
     category: z.string().optional(),
-    providerId: z.string().optional()
+    providerId: z.string().optional(),
+    approvalStatus: z.enum(["pending", "approved", "rejected"]).optional()
 })
 
 export type InventoryType = z.infer<typeof InventorySchema>;    

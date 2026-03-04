@@ -1,7 +1,7 @@
 import { Router } from "express";
 import providerServiceController from "../../controller/provider/provider-service.controller";
 import { authorizedMiddleware, providerMiddleware } from "../../middleware/authorization.middleware";
-import { uploads } from "../../middleware/upload.middleware";
+import { documentUploads } from "../../middleware/upload.middleware";
 import { requireServiceOwnership } from "../../middleware/service-authorization.middleware";
 
 const router = Router();
@@ -10,7 +10,7 @@ router.post(
     "/apply",
     authorizedMiddleware,
     providerMiddleware,
-    uploads.fields([
+    documentUploads.fields([
         { name: "medicalLicenseDocument", maxCount: 1 },
         { name: "certificationDocument", maxCount: 1 },
         { name: "facilityImages", maxCount: 10 },

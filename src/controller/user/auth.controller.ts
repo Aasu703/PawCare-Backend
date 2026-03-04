@@ -110,7 +110,7 @@ export class AuthController {
 
         // If a new profile image was uploaded
         if (req.file) {
-            user.imageUrl = `/uploads/${req.file.filename}`;
+            user.imageUrl = `/uploads/image/${req.file.filename}`;
         }
 
         await user.save();
