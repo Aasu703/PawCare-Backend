@@ -50,6 +50,7 @@ const imageFileFilter = (req: Express.Request, file: Express.Multer.File, cb: mu
         'image/webp',
         'image/heic',
         'image/heif',
+        
     ];
     const allowedExt = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif'];
     const extension = path.extname(file.originalname).toLowerCase();

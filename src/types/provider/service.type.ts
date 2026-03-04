@@ -9,7 +9,8 @@ export const ServiceSchema = z.object({
     duration_minutes: z.coerce.number().int().nonnegative(),
     category: z.enum(["grooming", "boarding", "vet"]).optional(),
     availability: z.array(z.string()).optional(), // e.g., ["Monday 9-5", "Tuesday 9-5"]
-    providerId: z.string().optional()
+    providerId: z.string().optional(),
+    approvalStatus: z.enum(["pending", "approved", "rejected"]).optional()
 })
 
 export type ServiceType = z.infer<typeof ServiceSchema>;

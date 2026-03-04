@@ -334,6 +334,11 @@ export class ProviderController {
                 }
             }
 
+            // Handle profile image upload
+            if (req.file) {
+                updates.profileImageUrl = `/uploads/image/${req.file.filename}`;
+            }
+
             // Handle numeric fields
             if (req.body?.appointmentFee !== undefined) {
                 const fee = Number(req.body.appointmentFee);

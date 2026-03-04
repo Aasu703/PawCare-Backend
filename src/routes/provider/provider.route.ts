@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { ProviderController } from "../../controller/provider/provider.controller";
 import { authorizedMiddleware, providerMiddleware, adminMiddleware } from "../../middleware/authorization.middleware";
+import { uploads } from "../../middleware/upload.middleware";
 
 const router = Router();
 const providerController = new ProviderController();
@@ -13,7 +14,7 @@ router.post("/login", (req, res) => providerController.login(req, res));
 router.put("/set-type", authorizedMiddleware, providerMiddleware, (req, res) => providerController.setProviderType(req, res));
 router.post("/set-type", authorizedMiddleware, providerMiddleware, (req, res) => providerController.setProviderType(req, res));
 router.get("/me", authorizedMiddleware, providerMiddleware, (req, res) => providerController.getMyProfile(req, res));
-router.put("/profile", authorizedMiddleware, providerMiddleware, (req, res) => providerController.updateMyProfile(req, res));
+router.put("/profile", authorizedMiddleware, providerMiddleware, uploads.single('image'), (req, res) => providerController.updateMyProfile(req, res));
 
 // Admin: approve/reject providers
 router.put("/approve/:id", authorizedMiddleware, adminMiddleware, (req, res) => providerController.approveProvider(req, res));
