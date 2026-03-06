@@ -8,9 +8,9 @@ import {
 } from "../../repositories/chat/chat.repository";
 import { ChatRole } from "../../models/chat/chat-message.model";
 
-const chatRepository = new ChatRepository();
-
 export class ChatService {
+    constructor(private chatRepository = new ChatRepository()) {}
+
     private isObjectId(value: string): boolean {
         return /^[a-fA-F0-9]{24}$/.test(value);
     }
@@ -48,7 +48,7 @@ export class ChatService {
             throw new HttpError(400, "Message content is required");
         }
 
-        return chatRepository.createMessage({
+        return this.chatRepository.createMessage({
             content,
             senderId: params.senderId,
             senderRole: params.senderRole,
@@ -73,7 +73,7 @@ export class ChatService {
         }
         this.ensureParticipantRoles(params.currentRole, params.participantRole);
 
-        return chatRepository.getConversationMessages({
+        return this.chatRepository.getConversationMessages({
             currentUserId: params.currentUserId,
             currentRole: params.currentRole,
             participantId: params.participantId,
@@ -96,7 +96,7 @@ export class ChatService {
             throw new HttpError(400, "Invalid participant id");
         }
 
-        return chatRepository.getConversations({
+        return this.chatRepository.getConversations({
             currentUserId: params.currentUserId,
             currentRole: params.currentRole,
             page: params.page,
@@ -115,7 +115,7 @@ export class ChatService {
             throw new HttpError(400, "Invalid participant id");
         }
 
-        return chatRepository.getContacts({
+        return this.chatRepository.getContacts({
             currentUserId: params.currentUserId,
             currentRole: params.currentRole,
         });

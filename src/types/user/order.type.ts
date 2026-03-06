@@ -14,7 +14,7 @@ export const OrderSchema = z.object({
     userId: z.string().optional(),
     items: z.array(OrderItemSchema).min(1),
     totalAmount: z.coerce.number().nonnegative(),
-    status: z.enum(["pending", "confirmed", "shipped", "delivered", "cancelled"]).default("pending"),
+    status: z.enum(["pending", "processing", "confirmed", "shipped", "delivered", "cancelled"]).default("pending"),
     shippingAddress: z.string().optional(),
     notes: z.string().optional(),
     createdAt: z.string().optional(),

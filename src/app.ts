@@ -4,6 +4,7 @@ import providerServiceRoute from './routes/provider/service.route';
 import providerInventoryRoute from './routes/provider/inventory.route';
 import providerPostRoute from './routes/provider/post.route';
 import providerBookingRoute from './routes/provider/booking.route';
+import providerOrderRoute from './routes/provider/order.route';
 import providerPetRoute from './routes/provider/pet.route';
 import petRouter from "./routes/pet/pet.route";
 import path from 'path';
@@ -19,6 +20,8 @@ import adminPostRoute from './routes/admin/post.route';
 import adminHealthRecordRoute from './routes/admin/healthrecord.route';
 import adminFeedbackRoute from './routes/admin/feedback.route';
 import adminInventoryRoute from './routes/admin/inventory.route';
+import adminOrderRoute from './routes/admin/order.route';
+import adminProviderServiceRoute from './routes/admin/provider-service.route';
 import bookingRoute from './routes/user/booking.route';
 import serviceRoute from './routes/public/service.route';
 import publicPostRoute from './routes/public/post.route';
@@ -37,6 +40,7 @@ import orderRoute from './routes/user/order.route';
 import cartRoute from './routes/user/cart.route';
 import { HttpError } from './errors/http-error';
 import morgan from 'morgan';
+import logger from './config/logger';
 
 
 const app: Application = express();
@@ -65,7 +69,12 @@ app.use(morgan("dev"));
 
 // Health check route
 app.get('/', (req: Request, res: Response) => {
-    res.status(200).json({ message: 'PawCare API is running!' });
+    res.status(200).json({ success: true, message: 'PawCare API is running!' });
+});
+
+// API root
+app.get('/api', (req: Request, res: Response) => {
+    res.status(200).json({ success: true, message: 'PawCare API' });
 });
 
 // Auth routes
@@ -78,6 +87,8 @@ app.use('/api/provider/inventory', providerInventoryRoute);
 app.use('/api/provider/booking', providerBookingRoute);
 // Provider post routes
 app.use('/api/provider/post', providerPostRoute);
+// Provider order routes
+app.use('/api/provider/order', providerOrderRoute);
 // Provider pet routes (vet assigned pets)
 app.use('/api/provider/pet', providerPetRoute);
 // Provider routes
@@ -88,6 +99,8 @@ app.use("/api/user/pet", petRouter);
 app.use("/api/admin/users", admiUserRoute);
 // Admin Pet routes
 app.use("/api/admin/pet", adminPetRoute);
+// Admin Provider-Service routes (must be before /api/admin/provider)
+app.use('/api/admin/provider-service', adminProviderServiceRoute);
 // Admin Provider routes
 app.use("/api/admin/provider", adminProviderRoute);
 // Admin Stats routes
@@ -108,6 +121,8 @@ app.use('/api/admin/health-record', adminHealthRecordRoute);
 app.use('/api/admin/feedback', adminFeedbackRoute);
 // Admin Inventory routes
 app.use('/api/admin/inventory', adminInventoryRoute);
+// Admin Order routes
+app.use('/api/admin/order', adminOrderRoute);
 // Booking routes
 app.use('/api/booking', bookingRoute);
 // Order routes
@@ -135,12 +150,17 @@ app.use('/api/feedback', feedbackRoute);
 // Generic upload routes
 app.use('/api/upload', uploadRoute);
 
-// installed a request logger middleware to log incoming requests and their responses. This will help in debugging and monitoring the API usage.
+// 404 handler - must be after all routes
+app.use((req: Request, res: Response, next: NextFunction) => {
+    return res.status(404).json({ success: false, message: 'Route not found' });
+});
+
+// Request logger middleware
 app.use((req, res, next) => {
-  console.log("Incoming Request:", req.method, req.url);
+  logger.debug(`${req.method} ${req.url}`);
 
   res.on("finish", () => {
-    console.log("Response Status:", res.statusCode);
+    logger.debug(`Response Status: ${res.statusCode}`);
   });
 
   next();
@@ -149,11 +169,40 @@ app.use((req, res, next) => {
 
 
 
-app.use((err: Error, req: Request, res: Response, next: Function) => {
+app.use((err: any, req: Request, res: Response, next: Function) => {
+    // Known HTTP errors
     if (err instanceof HttpError) {
-        return res.status(err.statusCode).json({ success: false, message: err.message});
+        return res.status(err.statusCode).json({ success: false, message: err.message });
     }
-    return res.status(500).json({ success: false, message:err.message || 'Internal Server Error' });
+
+    // Mongoose validation error
+    if (err.name === "ValidationError" && err.errors) {
+        const messages = Object.values(err.errors).map((e: any) => e.message);
+        return res.status(400).json({ success: false, message: "Validation failed", errors: messages });
+    }
+
+    // MongoDB duplicate-key error (code 11000)
+    if (err.code === 11000) {
+        const field = Object.keys(err.keyPattern || {})[0] || "field";
+        return res.status(409).json({ success: false, message: `Duplicate value for ${field}` });
+    }
+
+    // JWT errors
+    if (err.name === "JsonWebTokenError") {
+        return res.status(401).json({ success: false, message: "Invalid token" });
+    }
+    if (err.name === "TokenExpiredError") {
+        return res.status(401).json({ success: false, message: "Token expired" });
+    }
+
+    // Zod validation error
+    if (err.name === "ZodError" || err.issues) {
+        return res.status(400).json({ success: false, message: "Validation failed", errors: err.issues || err.errors });
+    }
+
+    // Fallback
+    logger.error("Unhandled error:", err);
+    return res.status(500).json({ success: false, message: err.message || "Internal Server Error" });
 });
 
 export default app;

@@ -10,7 +10,12 @@ describe('Provider Integration Tests', () => {
         providerType: 'shop',
         email: 'testprovider@example.com',
         password: 'Test@1234',
-        confirmPassword: 'Test@1234'
+        confirmPassword: 'Test@1234',
+        location: {
+            latitude: 27.7172,
+            longitude: 85.324,
+            address: '123 Test St'
+        }
     };
 
     let providerId: string | undefined;
@@ -28,7 +33,7 @@ describe('Provider Integration Tests', () => {
         const res = await request(app).post('/api/provider/register').send(testProvider);
         expect(res.status).toBe(201);
         expect(res.body).toHaveProperty('message', 'Provider Created');
-        providerId = res.body.data?._id || res.body.data?.id;
+        providerId = res.body.data?.provider?._id || res.body.data?.provider?.id;
     });
 
     test('POST /api/provider/login should login provider', async () => {

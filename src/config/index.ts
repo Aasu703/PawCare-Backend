@@ -1,8 +1,35 @@
 import dotenv from "dotenv";
-dotenv.config(); 
+import { z } from "zod/v4";
+dotenv.config();
 
-export const PORT: number =
-	process.env.PORT ? parseInt(process.env.PORT) : 3000;
-export const MONGO_URI: string = process.env.MONGODB_URI || "mongodb://localhost:27017/pawcare_db";
+// Support both MONGODB_URI and MONGO_URI (common variants)
+if (!process.env.MONGODB_URI && process.env.MONGO_URI) {
+	process.env.MONGODB_URI = process.env.MONGO_URI;
+}
 
-export const JWT_SECRET: string = process.env.JWT_SECRET || "defaultsecretkey";
+const envSchema = z.object({
+	PORT: z.coerce.number().int().positive().default(3000),
+	MONGODB_URI: z.string().min(1, "MONGODB_URI or MONGO_URI is required"),
+	JWT_SECRET: z.string().min(1, "JWT_SECRET is required"),
+	NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+	CLIENT_URL: z.string().optional().default("http://localhost:3000"),
+	EMAIL_USER: z.string().optional().default(""),
+	EMAIL_PASS: z.string().optional().default(""),
+});
+
+const parsed = envSchema.safeParse(process.env);
+
+if (!parsed.success) {
+	console.error("❌ Invalid environment variables:", parsed.error.format());
+	process.exit(1);
+}
+
+const env = parsed.data;
+
+export const PORT: number = env.PORT;
+export const MONGO_URI: string = env.MONGODB_URI;
+export const JWT_SECRET: string = env.JWT_SECRET;
+export const NODE_ENV: string = env.NODE_ENV;
+export const CLIENT_URL: string = env.CLIENT_URL;
+export const EMAIL_USER: string = env.EMAIL_USER;
+export const EMAIL_PASS: string = env.EMAIL_PASS;

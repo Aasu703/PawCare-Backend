@@ -4,16 +4,18 @@ import { HttpError } from "../../errors/http-error";
 import ProviderServiceService from "../provider/provider-service.service";
 import ServiceRepository from "../../repositories/provider/service.repository";
 
-let bookingRepository = new BookingRepository();
-const providerServiceService = new ProviderServiceService();
-const serviceRepository = new ServiceRepository();
-
 export class BookingService {
+    constructor(
+        private bookingRepository = new BookingRepository(),
+        private providerServiceService = new ProviderServiceService(),
+        private serviceRepository = new ServiceRepository()
+    ) {}
+
     async createBooking(data: CreateBookingDto, userId: string){
         let resolvedService: any = null;
 
         if (data.providerServiceId) {
-            const providerService = await providerServiceService.getProviderServiceById(data.providerServiceId);
+            const providerService = await this.providerServiceService.getProviderServiceById(data.providerServiceId);
             if (providerService.verificationStatus !== "approved") {
                 throw new HttpError(403, "Provider service is not approved");
             }
@@ -23,7 +25,7 @@ export class BookingService {
             if (!data.serviceId) {
                 throw new HttpError(400, "serviceId is required when providerServiceId is provided");
             }
-            resolvedService = await serviceRepository.getServiceById(data.serviceId);
+            resolvedService = await this.serviceRepository.getServiceById(data.serviceId);
             if (!resolvedService) {
                 throw new HttpError(404, "Service not found");
             }
@@ -41,7 +43,7 @@ export class BookingService {
 
         // Resolve providerId automatically from selected service when not passed by client.
         if (!data.providerId && data.serviceId) {
-            const service = resolvedService || await serviceRepository.getServiceById(data.serviceId);
+            const service = resolvedService || await this.serviceRepository.getServiceById(data.serviceId);
             if (!service) {
                 throw new HttpError(404, "Service not found");
             }
@@ -51,13 +53,13 @@ export class BookingService {
             }
         }
 
-        const newBooking = await bookingRepository.createBooking(data, userId);
+        const newBooking = await this.bookingRepository.createBooking(data, userId);
         return newBooking;
     
     }
 
     async getBookingById(bookingId: string){
-        const booking = await bookingRepository.getBookingById(bookingId);
+        const booking = await this.bookingRepository.getBookingById(bookingId);
         if(!booking){
             throw new HttpError(404, "Booking not found");
         }
@@ -65,18 +67,25 @@ export class BookingService {
     }
 
     async getAllBookings(page: number = 1, limit: number = 10){
-        return bookingRepository.getAllBookings(page, limit);
+        return this.bookingRepository.getAllBookings(page, limit);
     }
 
     async updateBooking(bookingId: string, updates: UpdateBookingDto){
-        const updatedBooking = await bookingRepository.updateBookingById(bookingId, updates);
+        const updatedBooking = await this.bookingRepository.updateBookingById(bookingId, updates);
         if(!updatedBooking){
             throw new HttpError(404, "Booking not found");
         }
         return updatedBooking;
     }
     async deleteBooking(bookingId: string){
-        const deletedBooking = await bookingRepository.deleteBookingById(bookingId);
+        const booking = await this.bookingRepository.getBookingById(bookingId);
+        if(!booking){
+            throw new HttpError(404, "Booking not found");
+        }
+        if (booking.status !== "pending") {
+            throw new HttpError(403, "Cannot cancel a booking that is already being processed");
+        }
+        const deletedBooking = await this.bookingRepository.deleteBookingById(bookingId);
         if(!deletedBooking){
             throw new HttpError(404, "Booking not found");
         }
@@ -84,8 +93,8 @@ export class BookingService {
     }
     async getBookingsByUserId(userId: string, page: number = 1, limit: number = 10){
         // Pass the page number to the repository (it computes skip internally).
-        const bookings = await bookingRepository.getBookingsByUserId(userId, page, limit);
-        const total = await bookingRepository.countBookingsByUserId(userId);
+        const bookings = await this.bookingRepository.getBookingsByUserId(userId, page, limit);
+        const total = await this.bookingRepository.countBookingsByUserId(userId);
         return {
             bookings,
             total,
@@ -96,22 +105,37 @@ export class BookingService {
     }
 
     async getBookingsByProviderId(providerId: string, page: number = 1, limit: number = 10) {
-        return bookingRepository.getBookingsByProviderId(providerId, page, limit);
+        return this.bookingRepository.getBookingsByProviderId(providerId, page, limit);
     }
 
     async updateBookingStatus(bookingId: string, providerId: string, status: string) {
-        const booking = await bookingRepository.getBookingById(bookingId);
+        const booking = await this.bookingRepository.getBookingById(bookingId);
         if (!booking) {
             throw new HttpError(404, "Booking not found");
         }
         if (booking.providerId?.toString() !== providerId.toString()) {
             throw new HttpError(403, "Forbidden: not your booking");
         }
-        const validStatuses = ["confirmed", "cancelled", "completed", "pending", "rejected"];
-        if (!validStatuses.includes(status)) {
-            throw new HttpError(400, `Invalid status. Must be one of: ${validStatuses.join(", ")}`);
+
+        const currentStatus = booking.status;
+
+        // Final states — no further transitions allowed
+        if (currentStatus === "completed" || currentStatus === "cancelled") {
+            throw new HttpError(400, `Cannot update a booking that is already ${currentStatus}`);
         }
-        const updated = await bookingRepository.updateBookingById(bookingId, { status } as any);
+
+        // Valid transition map
+        const validTransitions: Record<string, string[]> = {
+            pending: ["confirmed", "cancelled"],
+            confirmed: ["completed", "cancelled"],
+        };
+
+        const allowed = validTransitions[currentStatus as string];
+        if (!allowed || !allowed.includes(status)) {
+            throw new HttpError(400, `Invalid status transition: cannot go from "${currentStatus}" to "${status}"`);
+        }
+
+        const updated = await this.bookingRepository.updateBookingById(bookingId, { status } as any);
         if (!updated) {
             throw new HttpError(404, "Booking not found");
         }

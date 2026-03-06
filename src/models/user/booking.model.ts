@@ -9,7 +9,7 @@ const BookingSchema: Schema = new Schema(
         price: {type: Number, min: 0, required: false},
         notes: {type: String, required: false},
         serviceId: {type: String, required: false, index: true},
-        userId: {type: mongoose.Schema.Types.ObjectId, ref: "User", required: false, index: true},
+        userId: {type: mongoose.Schema.Types.ObjectId, ref: "User", required: false},
         petId: {type: mongoose.Schema.Types.ObjectId, ref: "Pet", required: false, index: true},
         providerId: {type: mongoose.Schema.Types.ObjectId, ref: "Provider", required: false, index: true},
         providerServiceId: {type: mongoose.Schema.Types.ObjectId, ref: "ProviderService", required: false, index: true}

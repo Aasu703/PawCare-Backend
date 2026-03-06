@@ -10,12 +10,12 @@ const OrderItemSchema: Schema = new Schema({
 
 const OrderSchema: Schema = new Schema(
     {
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         items: { type: [OrderItemSchema], required: true },
         totalAmount: { type: Number, required: true, min: 0 },
         status: {
             type: String,
-            enum: ["pending", "confirmed", "shipped", "delivered", "cancelled"],
+            enum: ["pending", "processing", "confirmed", "shipped", "delivered", "cancelled"],
             default: "pending",
         },
         shippingAddress: { type: String },

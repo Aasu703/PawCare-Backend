@@ -1,576 +1,979 @@
 import mongoose from "mongoose";
-import { UserModel } from "./models/user/user.model";
-import { PetModel } from "./models/pet/pet.model";
-import { ProviderModel } from "./models/provider/provider.model";
-import { ServiceModel } from "./models/provider/service.model";
-import { BookingModel } from "./models/user/booking.model";
-import { ReviewModel } from "./models/user/review.model";
-import { MessageModel } from "./models/user/message.model";
-import { HealthRecordModel } from "./models/pet/healthrecord.model";
-import { AttachmentModel } from "./models/pet/attachment.model";
-import { FeedbackModel } from "./models/provider/feedback.model";
-import { InventoryModel } from "./models/provider/inventory.model";
 import bcryptjs from "bcryptjs";
-import { MONGO_URI } from "./config";
+import dotenv from "dotenv";
 
-async function seedDatabase() {
-    try {
-        // Connect to database
-        await mongoose.connect(MONGO_URI);
-        console.log("Connected to database");
+dotenv.config();
 
-        // Clear ALL existing data
-        await UserModel.deleteMany({});
-        await PetModel.deleteMany({});
-        await ProviderModel.deleteMany({});
-        await ServiceModel.deleteMany({});
-        await BookingModel.deleteMany({});
-        await ReviewModel.deleteMany({});
-        await MessageModel.deleteMany({});
-        await HealthRecordModel.deleteMany({});
-        await AttachmentModel.deleteMany({});
-        await FeedbackModel.deleteMany({});
-        await InventoryModel.deleteMany({});
-        console.log("Cleared existing data");
+// Support both MONGODB_URI and MONGO_URI
+const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || "mongodb://localhost:27017/pawcare_db";
+// ── Models ────────────────────────────────────────────────
+import { UserModel } from "./models/user/user.model";
+import { ProviderModel } from "./models/provider/provider.model";
+import { ProviderServiceModel } from "./models/provider/provider-service.model";
+import { PetModel } from "./models/pet/pet.model";
+import { ServiceModel } from "./models/provider/service.model";
+import { InventoryModel } from "./models/provider/inventory.model";
+import { BookingModel } from "./models/user/booking.model";
+import { OrderModel } from "./models/user/order.model";
+import { ReviewModel } from "./models/user/review.model";
+import { FeedbackModel } from "./models/provider/feedback.model";
+import { HealthRecordModel } from "./models/pet/healthrecord.model";
+import { PostModel } from "./models/provider/post.model";
+import { MessageModel } from "./models/user/message.model";
+import { NotificationModel } from "./models/user/notification.model";
+import { ChatMessageModel } from "./models/chat/chat-message.model";
+import { CartModel } from "./models/user/cart.model";
+import { AttachmentModel } from "./models/pet/attachment.model";
 
-        // ========== USERS ==========
-        const hashedPassword = await bcryptjs.hash("password123", 10);
-        const providerHashedPassword = await bcryptjs.hash("zxcvbnm@qwer1234", 10);
+async function seed() {
+    await mongoose.connect(MONGO_URI);
+    console.log("Connected to MongoDB for seeding");
 
-        const firstNames = ["John", "Jane", "Bob", "Alice", "Charlie", "Diana", "Edward", "Fiona", "George", "Helen", "Ian", "Julia", "Kevin", "Laura", "Michael", "Nancy", "Oliver", "Paula", "Quinn", "Rachel", "Steve", "Tina", "Ulysses", "Victoria", "William"];
-        const lastNames = ["Doe", "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin", "Lee", "Perez", "Thompson", "White"];
+    // ── Clear all collections ─────────────────────────────
+    await Promise.all([
+        UserModel.deleteMany({}),
+        ProviderModel.deleteMany({}),
+        ProviderServiceModel.deleteMany({}),
+        PetModel.deleteMany({}),
+        ServiceModel.deleteMany({}),
+        InventoryModel.deleteMany({}),
+        BookingModel.deleteMany({}),
+        OrderModel.deleteMany({}),
+        ReviewModel.deleteMany({}),
+        FeedbackModel.deleteMany({}),
+        HealthRecordModel.deleteMany({}),
+        PostModel.deleteMany({}),
+        MessageModel.deleteMany({}),
+        NotificationModel.deleteMany({}),
+        ChatMessageModel.deleteMany({}),
+        CartModel.deleteMany({}),
+        AttachmentModel.deleteMany({}),
+    ]);
+    console.log("All collections cleared");
 
-        const users = [
-            {
-                email: "admin@pawcare.com",
-                password: hashedPassword,
-                Firstname: "Admin",
-                Lastname: "User",
-                phone: "+1234567890",
-                role: "admin"
-            }
-        ];
+    // Hash password once, reuse for all accounts
+    const hashedPassword = await bcryptjs.hash("Password123!", 10);
 
-        // Generate 24 regular users
-        for (let i = 0; i < 24; i++) {
-            users.push({
-                email: `${firstNames[i].toLowerCase()}.${lastNames[i].toLowerCase()}@example.com`,
-                password: hashedPassword,
-                Firstname: firstNames[i],
-                Lastname: lastNames[i],
-                phone: `+1234567${String(891 + i).padStart(3, '0')}`,
-                role: "user"
-            });
-        }
-
-        const createdUsers = await UserModel.insertMany(users);
-        console.log("Seeded users:", createdUsers.length);
-
-        // ========== PROVIDERS ==========
-        const businessNames = [
-            "City Vet Clinic", "Pawfect Grooming", "Smart Paws Training", "Happy Tails Vet", "Furry Friends Spa",
-            "Pet Paradise Grooming", "Wagging Tails Training", "Animal Care Center", "Purrfect Paws Salon", "Bark Avenue Clinic",
-            "Whisker Wonders Grooming", "Tail Waggers Academy", "Companion Animal Hospital", "Pet Pamper Palace", "Critter Care Clinic",
-            "Fluffy Friends Grooming", "Obedience Masters", "Veterinary Excellence Center", "Grooming Galaxy", "Pet Behavior Pros",
-            "Healthy Paws Hospital", "Luxury Pet Spa", "Training Titans", "Animal Wellness Clinic", "Supreme Grooming Studio"
-        ];
-
-        const providerCities = ["Springfield", "Riverside", "Meadowbrook", "Oakwood", "Pineville", "Maplewood", "Cedarburg", "Elmwood", "Birchwood", "Willowbrook"];
-        const providerTypes: Array<"vet" | "shop" | "babysitter"> = ["vet", "shop", "babysitter"];
-
-        const providers = [];
-
-        // First provider uses special credentials (pawcareprovider@gmail.com)
-        providers.push({
-            businessName: "PawCare Provider Inc.",
-            address: "Kathmandu Nepal",
+    // ══════════════════════════════════════════════════════
+    // 1. USERS  (no dependencies)
+    // ══════════════════════════════════════════════════════
+    const users = await UserModel.insertMany([
+        {
+            email: "admin@pawcare.com",
+            password: hashedPassword,
+            Firstname: "Admin",
+            Lastname: "User",
+            phone: "1234567890",
+            role: "admin",
+        },
+        {
+            email: "john@example.com",
+            password: hashedPassword,
+            Firstname: "John",
+            Lastname: "Smith",
             phone: "9876543210",
-            email: "pawcareprovider@gmail.com",
-            password: providerHashedPassword,
-            rating: 4.5,
+            role: "user",
+        },
+        {
+            email: "sarah@example.com",
+            password: hashedPassword,
+            Firstname: "Sarah",
+            Lastname: "Johnson",
+            phone: "5551234567",
+            role: "user",
+        },
+        {
+            email: "mike@example.com",
+            password: hashedPassword,
+            Firstname: "Mike",
+            Lastname: "Davis",
+            phone: "5559876543",
+            role: "user",
+        },
+        {
+            email: "emily@example.com",
+            password: hashedPassword,
+            Firstname: "Emily",
+            Lastname: "Brown",
+            phone: "5554443322",
+            role: "user",
+        },
+        {
+            email: "vetprovider@example.com",
+            password: hashedPassword,
+            Firstname: "David",
+            Lastname: "Wilson",
+            phone: "5551112233",
+            role: "provider",
+        },
+        {
+            email: "shopprovider@example.com",
+            password: hashedPassword,
+            Firstname: "Lisa",
+            Lastname: "Martinez",
+            phone: "5556667788",
+            role: "provider",
+        },
+        {
+            email: "groomer@example.com",
+            password: hashedPassword,
+            Firstname: "Anna",
+            Lastname: "Taylor",
+            phone: "5553334455",
+            role: "provider",
+        },
+    ]);
+    console.log(`Seeded ${users.length} users`);
+
+    const [admin, john, sarah, mike, emily, vetUser, shopUser, groomerUser] = users;
+
+    // ══════════════════════════════════════════════════════
+    // 2. PROVIDERS  (depends on: Users)
+    // ══════════════════════════════════════════════════════
+    const providers = await ProviderModel.insertMany([
+        {
+            businessName: "PawCare Vet Clinic",
+            address: "123 Vet Lane, Springfield",
+            phone: "5551112233",
+            userId: vetUser._id,
+            email: "vet@pawcareclinic.com",
+            password: hashedPassword,
+            rating: 4.8,
             role: "provider",
             providerType: "vet",
             status: "approved",
-            certification: "Nepal Veterinary Council",
-            experience: "8 years",
-            clinicOrShopName: "PawCare Vet Center",
-            panNumber: "PANPC0001"
-        });
+            certification: "DVM Licensed",
+            certificationDocumentUrl: "",
+            experience: "10 years in veterinary medicine",
+            clinicOrShopName: "PawCare Vet Clinic",
+            panNumber: "VET12345",
+            bio: "Experienced veterinarian specializing in small animal care, surgery, and preventive medicine.",
+            degree: "DVM from State University",
+            profileImageUrl: "",
+            appointmentFee: 500,
+            ratingCount: 25,
+            workingHours: "Monday - Friday at 8:00 am - 5:00pm",
+            location: {
+                latitude: 27.7172,
+                longitude: 85.324,
+                address: "123 Vet Lane, Springfield",
+            },
+            locationUpdatedAt: new Date(),
+            locationVerified: true,
+            locationVerifiedAt: new Date(),
+            locationVerifiedBy: admin._id,
+            pawcareVerified: true,
+        },
+        {
+            businessName: "PawMart Pet Shop",
+            address: "456 Shop Street, Springfield",
+            phone: "5556667788",
+            userId: shopUser._id,
+            email: "shop@pawmart.com",
+            password: hashedPassword,
+            rating: 4.5,
+            role: "provider",
+            providerType: "shop",
+            status: "approved",
+            certification: "Business License",
+            certificationDocumentUrl: "",
+            experience: "5 years in pet retail",
+            clinicOrShopName: "PawMart Pet Shop",
+            panNumber: "SHOP67890",
+            bio: "Your one-stop shop for pet food, toys, accessories, and supplies.",
+            degree: "",
+            profileImageUrl: "",
+            appointmentFee: 0,
+            ratingCount: 18,
+            workingHours: "Monday - Saturday at 9:00 am - 7:00pm",
+            location: {
+                latitude: 27.7,
+                longitude: 85.33,
+                address: "456 Shop Street, Springfield",
+            },
+            locationUpdatedAt: new Date(),
+            locationVerified: true,
+            locationVerifiedAt: new Date(),
+            locationVerifiedBy: admin._id,
+            pawcareVerified: true,
+        },
+        {
+            businessName: "Happy Paws Grooming",
+            address: "789 Grooming Ave, Springfield",
+            phone: "5553334455",
+            userId: groomerUser._id,
+            email: "grooming@happypaws.com",
+            password: hashedPassword,
+            rating: 4.6,
+            role: "provider",
+            providerType: "babysitter",
+            status: "approved",
+            certification: "Certified Pet Groomer",
+            certificationDocumentUrl: "",
+            experience: "7 years in pet grooming and care",
+            clinicOrShopName: "Happy Paws Grooming",
+            panNumber: "GPR45678",
+            bio: "Professional grooming services including bathing, haircuts, nail trimming, and pet sitting.",
+            degree: "",
+            profileImageUrl: "",
+            appointmentFee: 300,
+            ratingCount: 12,
+            workingHours: "Monday - Friday at 9:00 am - 6:00pm",
+            location: {
+                latitude: 27.71,
+                longitude: 85.31,
+                address: "789 Grooming Ave, Springfield",
+            },
+            locationUpdatedAt: new Date(),
+            locationVerified: false,
+            locationVerifiedAt: null,
+            locationVerifiedBy: null,
+            pawcareVerified: false,
+        },
+    ]);
+    console.log(`Seeded ${providers.length} providers`);
 
-        for (let i = 0; i < 25; i++) {
-            const city = providerCities[i % providerCities.length];
-            const providerType = providerTypes[i % providerTypes.length];
-            const commonFields = {
-                providerType,
-                status: "approved" as const,
-                clinicOrShopName: businessNames[i],
-            };
+    const [vetProvider, shopProvider, groomerProvider] = providers;
 
-            const typeSpecificFields =
-                providerType === "vet"
-                    ? {
-                          certification: "Board Certified Vet",
-                          experience: `${3 + (i % 10)} years`,
-                          panNumber: `PANVET${String(1000 + i)}`,
-                      }
-                    : providerType === "shop"
-                    ? {
-                          certification: "",
-                          experience: `${2 + (i % 8)} years`,
-                          panNumber: `PANSHOP${String(1000 + i)}`,
-                      }
-                    : {
-                          // "babysitter" type is used as groomer flow in this backend.
-                          certification: "",
-                          experience: `${1 + (i % 7)} years`,
-                          panNumber: `PANGRM${String(1000 + i)}`,
-                      };
+    // ══════════════════════════════════════════════════════
+    // 3. PROVIDER SERVICES  (depends on: Users)
+    // ══════════════════════════════════════════════════════
+    const providerServices = await ProviderServiceModel.insertMany([
+        {
+            userId: vetUser._id,
+            serviceType: "vet",
+            verificationStatus: "approved",
+            documents: [],
+            registrationNumber: "VET-REG-001",
+            bio: "Licensed veterinarian with specialization in small animals",
+            experience: "10 years",
+            ratingAverage: 4.8,
+            ratingCount: 25,
+            earnings: 125000,
+        },
+        {
+            userId: shopUser._id,
+            serviceType: "shop_owner",
+            verificationStatus: "approved",
+            documents: [],
+            registrationNumber: "SHOP-REG-002",
+            bio: "Pet supplies and accessories retailer",
+            experience: "5 years",
+            ratingAverage: 4.5,
+            ratingCount: 18,
+            earnings: 85000,
+        },
+        {
+            userId: groomerUser._id,
+            serviceType: "groomer",
+            verificationStatus: "approved",
+            documents: [],
+            registrationNumber: "GROOM-REG-003",
+            bio: "Professional pet groomer and caretaker",
+            experience: "7 years",
+            ratingAverage: 4.6,
+            ratingCount: 12,
+            earnings: 62000,
+        },
+    ]);
+    console.log(`Seeded ${providerServices.length} provider services`);
 
-            providers.push({
-                businessName: businessNames[i],
-                address: `${100 + i} Main St, ${city}, State ${12345 + i}`,
-                phone: `+1234567${String(895 + i).padStart(3, '0')}`,
-                email: `contact@${businessNames[i].toLowerCase().replace(/\s+/g, '')}@example.com`,
-                password: hashedPassword,
-                rating: Math.round((3.5 + Math.random() * 1.5) * 10) / 10, // Random rating between 3.5-5.0
-                ...commonFields,
-                ...typeSpecificFields,
-            });
-        }
+    const [vetPS, _shopPS, groomerPS] = providerServices;
 
-        const createdProviders = await ProviderModel.insertMany(providers);
-        console.log("Seeded providers:", createdProviders.length);
+    // ══════════════════════════════════════════════════════
+    // 4. PETS  (depends on: Users, Providers)
+    // ══════════════════════════════════════════════════════
+    const pets = await PetModel.insertMany([
+        {
+            name: "Max",
+            species: "Dog",
+            breed: "Golden Retriever",
+            age: 3,
+            weight: 30,
+            imageUrl: "",
+            allergies: "None",
+            dietNotes: "Grain-free diet recommended",
+            care: {
+                feedingTimes: ["8:00 AM", "6:00 PM"],
+                vaccinations: [
+                    { vaccine: "Rabies", recommendedByMonths: 12, dosesTaken: 2, status: "done" },
+                    { vaccine: "DHPP", recommendedByMonths: 12, dosesTaken: 3, status: "done" },
+                    { vaccine: "Bordetella", recommendedByMonths: 6, dosesTaken: 1, status: "pending" },
+                ],
+                notes: "Very friendly, loves treats",
+                updatedAt: new Date(),
+            },
+            ownerId: john._id,
+            assignedVetId: vetProvider._id,
+            assignedAt: new Date(),
+        },
+        {
+            name: "Bella",
+            species: "Cat",
+            breed: "Persian",
+            age: 2,
+            weight: 4.5,
+            imageUrl: "",
+            allergies: "Chicken",
+            dietNotes: "Fish-based diet only",
+            care: {
+                feedingTimes: ["7:30 AM", "12:00 PM", "6:30 PM"],
+                vaccinations: [
+                    { vaccine: "FVRCP", recommendedByMonths: 12, dosesTaken: 2, status: "done" },
+                    { vaccine: "Rabies", recommendedByMonths: 12, dosesTaken: 1, status: "done" },
+                ],
+                notes: "Indoor cat, needs regular brushing",
+                updatedAt: new Date(),
+            },
+            ownerId: sarah._id,
+            assignedVetId: vetProvider._id,
+            assignedAt: new Date(),
+        },
+        {
+            name: "Charlie",
+            species: "Dog",
+            breed: "Labrador",
+            age: 5,
+            weight: 35,
+            imageUrl: "",
+            allergies: "Wheat",
+            dietNotes: "High protein diet",
+            care: {
+                feedingTimes: ["7:00 AM", "5:00 PM"],
+                vaccinations: [
+                    { vaccine: "Rabies", recommendedByMonths: 12, dosesTaken: 3, status: "done" },
+                    { vaccine: "DHPP", recommendedByMonths: 12, dosesTaken: 4, status: "done" },
+                    { vaccine: "Leptospirosis", recommendedByMonths: 12, dosesTaken: 0, status: "pending" },
+                ],
+                notes: "Very active, needs daily exercise",
+                updatedAt: new Date(),
+            },
+            ownerId: mike._id,
+            assignedVetId: null,
+            assignedAt: null,
+        },
+        {
+            name: "Luna",
+            species: "Cat",
+            breed: "Siamese",
+            age: 1,
+            weight: 3.2,
+            imageUrl: "",
+            allergies: "None",
+            dietNotes: "Standard kitten food",
+            care: {
+                feedingTimes: ["8:00 AM", "1:00 PM", "7:00 PM"],
+                vaccinations: [
+                    { vaccine: "FVRCP", recommendedByMonths: 12, dosesTaken: 1, status: "pending" },
+                    { vaccine: "Rabies", recommendedByMonths: 12, dosesTaken: 0, status: "pending" },
+                ],
+                notes: "Playful kitten, needs socialization",
+                updatedAt: new Date(),
+            },
+            ownerId: emily._id,
+            assignedVetId: null,
+            assignedAt: null,
+        },
+        {
+            name: "Cooper",
+            species: "Dog",
+            breed: "Beagle",
+            age: 4,
+            weight: 12,
+            imageUrl: "",
+            allergies: "Dairy",
+            dietNotes: "Limited ingredient diet",
+            care: {
+                feedingTimes: ["8:00 AM", "6:00 PM"],
+                vaccinations: [
+                    { vaccine: "Rabies", recommendedByMonths: 12, dosesTaken: 2, status: "done" },
+                    { vaccine: "DHPP", recommendedByMonths: 12, dosesTaken: 3, status: "done" },
+                ],
+                notes: "Loves to sniff everything on walks",
+                updatedAt: new Date(),
+            },
+            ownerId: john._id,
+            assignedVetId: null,
+            assignedAt: null,
+        },
+    ]);
+    console.log(`Seeded ${pets.length} pets`);
 
-        // ========== PETS ==========
-        const dogBreeds = ["Golden Retriever", "German Shepherd", "Beagle", "Bulldog", "Poodle", "Labrador", "Siberian Husky", "Boxer", "Dachshund", "Chihuahua"];
-        const catBreeds = ["Siamese", "Persian", "Maine Coon", "British Shorthair", "Ragdoll", "Bengal", "Scottish Fold", "Russian Blue", "Abyssinian", "Sphynx"];
-        const petNames = ["Buddy", "Max", "Bella", "Charlie", "Lucy", "Bailey", "Daisy", "Rocky", "Sadie", "Jack", "Molly", "Toby", "Maggie", "Jake", "Sophie", "Bear", "Lily", "Duke", "Zoe", "Bentley", "Coco", "Riley", "Gracie", "Teddy", "Rosie"];
-        const allergies = ["None", "Chicken", "Grain", "Dairy", "Beef", "Pollen", "Dust mites", "Fleas", "None", "None"];
-        const dietNotes = ["Regular diet", "Grain-free diet", "High protein diet", "Weight management", "Senior formula", "Puppy formula", "Sensitive stomach", "Raw food diet", "Prescription diet", "Regular diet"];
+    const [max, bella, charlie, luna, cooper] = pets;
 
-        const pets = [];
+    // ══════════════════════════════════════════════════════
+    // 5. SERVICES  (depends on: Providers)
+    // ══════════════════════════════════════════════════════
+    const services = await ServiceModel.insertMany([
+        {
+            title: "General Health Checkup",
+            description: "Comprehensive veterinary health examination including physical assessment and basic diagnostics.",
+            price: 500,
+            duration_minutes: 30,
+            category: "vet",
+            availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+            providerId: vetProvider._id,
+            approvalStatus: "approved",
+        },
+        {
+            title: "Vaccination Package",
+            description: "Core vaccinations including Rabies, DHPP, and Bordetella with full health screening.",
+            price: 1200,
+            duration_minutes: 45,
+            category: "vet",
+            availability: ["Monday", "Wednesday", "Friday"],
+            providerId: vetProvider._id,
+            approvalStatus: "approved",
+        },
+        {
+            title: "Pet Surgery (Minor)",
+            description: "Minor surgical procedures including spay/neuter, lump removal, and dental extractions.",
+            price: 5000,
+            duration_minutes: 120,
+            category: "vet",
+            availability: ["Tuesday", "Thursday"],
+            providerId: vetProvider._id,
+            approvalStatus: "approved",
+        },
+        {
+            title: "Full Grooming Package",
+            description: "Complete grooming service: bath, haircut, nail trim, ear cleaning, and teeth brushing.",
+            price: 800,
+            duration_minutes: 90,
+            category: "grooming",
+            availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+            providerId: groomerProvider._id,
+            approvalStatus: "approved",
+        },
+        {
+            title: "Bath & Brush",
+            description: "Basic bathing and brushing service for all breeds.",
+            price: 400,
+            duration_minutes: 45,
+            category: "grooming",
+            availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+            providerId: groomerProvider._id,
+            approvalStatus: "approved",
+        },
+        {
+            title: "Pet Boarding (Daily)",
+            description: "Safe and comfortable boarding facility with daily care, feeding, exercise, and monitoring.",
+            price: 600,
+            duration_minutes: 1440,
+            category: "boarding",
+            availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+            providerId: groomerProvider._id,
+            approvalStatus: "approved",
+        },
+    ]);
+    console.log(`Seeded ${services.length} services`);
 
-        for (let userIndex = 1; userIndex <= 24; userIndex++) {
-            for (let petNum = 0; petNum < 2; petNum++) {
-                const isDog = Math.random() > 0.4;
-                const species = isDog ? "Dog" : "Cat";
-                const breeds = isDog ? dogBreeds : catBreeds;
-                const breed = breeds[Math.floor(Math.random() * breeds.length)];
-                const age = Math.floor(Math.random() * 15) + 1;
-                const baseWeight = isDog ? 20 : 8;
-                const weight = Math.round((baseWeight + Math.random() * 30) * 10) / 10;
+    const [checkupSvc, vaccinationSvc, surgerySvc, groomingSvc, bathSvc, boardingSvc] = services;
 
-                pets.push({
-                    name: petNames[(userIndex * 2 + petNum) % petNames.length] + (petNum > 0 ? petNum.toString() : ""),
-                    species,
-                    breed,
-                    age,
-                    weight,
-                    allergies: allergies[Math.floor(Math.random() * allergies.length)],
-                    dietNotes: dietNotes[Math.floor(Math.random() * dietNotes.length)],
-                    ownerId: createdUsers[userIndex]._id
-                });
-            }
-        }
+    // ══════════════════════════════════════════════════════
+    // 6. INVENTORY  (depends on: Providers)
+    // ══════════════════════════════════════════════════════
+    const inventoryItems = await InventoryModel.insertMany([
+        {
+            product_name: "Premium Dog Food (10kg)",
+            description: "High-quality grain-free dog food with real chicken and vegetables.",
+            quantity: 50,
+            price: 2500,
+            category: "Food",
+            providerId: shopProvider._id,
+            approvalStatus: "approved",
+        },
+        {
+            product_name: "Cat Food - Fish Delight (5kg)",
+            description: "Premium fish-based cat food suitable for all life stages.",
+            quantity: 40,
+            price: 1800,
+            category: "Food",
+            providerId: shopProvider._id,
+            approvalStatus: "approved",
+        },
+        {
+            product_name: "Flea & Tick Collar",
+            description: "8-month protection flea and tick collar for dogs.",
+            quantity: 30,
+            price: 800,
+            category: "Health",
+            providerId: shopProvider._id,
+            approvalStatus: "approved",
+        },
+        {
+            product_name: "Interactive Dog Toy Bundle",
+            description: "Set of 5 interactive chew and fetch toys for dogs.",
+            quantity: 25,
+            price: 650,
+            category: "Toys",
+            providerId: shopProvider._id,
+            approvalStatus: "approved",
+        },
+        {
+            product_name: "Pet Shampoo - Oatmeal",
+            description: "Gentle oatmeal shampoo for sensitive pet skin.",
+            quantity: 60,
+            price: 350,
+            category: "Grooming",
+            providerId: shopProvider._id,
+            approvalStatus: "approved",
+        },
+        {
+            product_name: "Cat Scratching Post",
+            description: "Tall multi-level cat scratching post with sisal rope.",
+            quantity: 15,
+            price: 1200,
+            category: "Accessories",
+            providerId: shopProvider._id,
+            approvalStatus: "approved",
+        },
+    ]);
+    console.log(`Seeded ${inventoryItems.length} inventory items`);
 
-        pets.push(
-            { name: "Fluffy", species: "Cat", breed: "Persian", age: 3, weight: 12, allergies: "None", dietNotes: "Regular diet", ownerId: createdUsers[1]._id },
-            { name: "Rex", species: "Dog", breed: "German Shepherd", age: 2, weight: 75, allergies: "Grain", dietNotes: "Grain-free diet", ownerId: createdUsers[2]._id }
-        );
+    const [dogFood, catFood, fleaCollar, dogToys, petShampoo, scratchPost] = inventoryItems;
 
-        const createdPets = await PetModel.insertMany(pets);
-        console.log("Seeded pets:", createdPets.length);
+    // ══════════════════════════════════════════════════════
+    // 7. BOOKINGS  (depends on: Users, Pets, Providers, Services, ProviderServices)
+    // ══════════════════════════════════════════════════════
+    const bookings = await BookingModel.insertMany([
+        {
+            startTime: "2025-01-15T09:00:00",
+            endTime: "2025-01-15T09:30:00",
+            status: "completed",
+            price: 500,
+            notes: "Annual checkup for Max",
+            serviceId: checkupSvc._id.toString(),
+            userId: john._id,
+            petId: max._id,
+            providerId: vetProvider._id,
+            providerServiceId: vetPS._id,
+        },
+        {
+            startTime: "2025-01-20T10:00:00",
+            endTime: "2025-01-20T10:45:00",
+            status: "completed",
+            price: 1200,
+            notes: "Core vaccination for Bella",
+            serviceId: vaccinationSvc._id.toString(),
+            userId: sarah._id,
+            petId: bella._id,
+            providerId: vetProvider._id,
+            providerServiceId: vetPS._id,
+        },
+        {
+            startTime: "2025-02-05T14:00:00",
+            endTime: "2025-02-05T15:30:00",
+            status: "completed",
+            price: 800,
+            notes: "Full grooming session for Charlie",
+            serviceId: groomingSvc._id.toString(),
+            userId: mike._id,
+            petId: charlie._id,
+            providerId: groomerProvider._id,
+            providerServiceId: groomerPS._id,
+        },
+        {
+            startTime: "2025-02-10T11:00:00",
+            endTime: "2025-02-10T11:45:00",
+            status: "confirmed",
+            price: 400,
+            notes: "Bath and brush for Luna",
+            serviceId: bathSvc._id.toString(),
+            userId: emily._id,
+            petId: luna._id,
+            providerId: groomerProvider._id,
+            providerServiceId: groomerPS._id,
+        },
+        {
+            startTime: "2025-02-15T09:00:00",
+            endTime: "2025-02-15T09:30:00",
+            status: "pending",
+            price: 500,
+            notes: "Follow-up checkup for Max",
+            serviceId: checkupSvc._id.toString(),
+            userId: john._id,
+            petId: max._id,
+            providerId: vetProvider._id,
+            providerServiceId: vetPS._id,
+        },
+        {
+            startTime: "2025-02-20T10:00:00",
+            endTime: "2025-02-21T10:00:00",
+            status: "pending",
+            price: 600,
+            notes: "One day boarding for Cooper",
+            serviceId: boardingSvc._id.toString(),
+            userId: john._id,
+            petId: cooper._id,
+            providerId: groomerProvider._id,
+            providerServiceId: groomerPS._id,
+        },
+        {
+            startTime: "2025-01-10T15:00:00",
+            endTime: "2025-01-10T17:00:00",
+            status: "cancelled",
+            price: 5000,
+            notes: "Surgery cancelled by owner",
+            serviceId: surgerySvc._id.toString(),
+            userId: mike._id,
+            petId: charlie._id,
+            providerId: vetProvider._id,
+            providerServiceId: vetPS._id,
+        },
+    ]);
+    console.log(`Seeded ${bookings.length} bookings`);
 
-        // ========== SERVICES ==========
-        const serviceTemplates = [
-            // Grooming services
-            { title: "Full Grooming Package", description: "Complete bath, haircut, nail trimming, ear cleaning, and blow dry", price: 75, duration_minutes: 90, catergory: "grooming", availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] },
-            { title: "Bath & Brush", description: "Thorough bath with premium shampoo and full coat brushing", price: 40, duration_minutes: 45, catergory: "grooming", availability: ["Monday", "Wednesday", "Friday"] },
-            { title: "Nail Trimming", description: "Safe and gentle nail trimming for dogs and cats", price: 20, duration_minutes: 20, catergory: "grooming", availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] },
-            { title: "De-shedding Treatment", description: "Specialized treatment to reduce shedding by up to 80%", price: 55, duration_minutes: 60, catergory: "grooming", availability: ["Tuesday", "Thursday", "Saturday"] },
-            { title: "Puppy First Groom", description: "Gentle introduction grooming session for puppies under 6 months", price: 35, duration_minutes: 40, catergory: "grooming", availability: ["Monday", "Wednesday", "Friday"] },
-            // Vet services
-            { title: "General Health Checkup", description: "Comprehensive physical examination and health assessment", price: 60, duration_minutes: 30, catergory: "vet", availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] },
-            { title: "Vaccination Package", description: "Core vaccinations including rabies, distemper, and parvovirus", price: 120, duration_minutes: 30, catergory: "vet", availability: ["Monday", "Wednesday", "Friday"] },
-            { title: "Dental Cleaning", description: "Professional teeth cleaning under sedation with full oral examination", price: 250, duration_minutes: 120, catergory: "vet", availability: ["Tuesday", "Thursday"] },
-            { title: "Spay/Neuter Surgery", description: "Routine spay or neuter procedure with post-op care instructions", price: 350, duration_minutes: 180, catergory: "vet", availability: ["Monday", "Wednesday", "Friday"] },
-            { title: "Emergency Consultation", description: "Urgent care consultation for acute illness or injury", price: 150, duration_minutes: 45, catergory: "vet", availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] },
-            { title: "Blood Work & Lab Tests", description: "Comprehensive blood panel and laboratory analysis", price: 90, duration_minutes: 30, catergory: "vet", availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] },
-            { title: "X-Ray & Imaging", description: "Digital radiography for diagnostic imaging", price: 180, duration_minutes: 45, catergory: "vet", availability: ["Monday", "Wednesday", "Friday"] },
-            // Boarding services
-            { title: "Day Boarding", description: "Full day care with playtime, meals, and supervision", price: 35, duration_minutes: 480, catergory: "boarding", availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] },
-            { title: "Overnight Boarding", description: "Comfortable overnight stay with evening and morning meals", price: 55, duration_minutes: 720, catergory: "boarding", availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] },
-            { title: "Luxury Suite Boarding", description: "Premium private suite with webcam, extra playtime, and gourmet meals", price: 85, duration_minutes: 720, catergory: "boarding", availability: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] },
-        ];
+    const [bk1, bk2, bk3] = bookings;
 
-        const services: any[] = [];
-        for (let i = 0; i < createdProviders.length; i++) {
-            // Each provider gets 3-5 services
-            const numServices = 3 + Math.floor(Math.random() * 3);
-            const shuffled = [...serviceTemplates].sort(() => Math.random() - 0.5);
-            for (let j = 0; j < numServices; j++) {
-                const template = shuffled[j % shuffled.length];
-                services.push({
-                    ...template,
-                    price: Math.round(template.price * (0.8 + Math.random() * 0.4)), // vary price ±20%
-                    providerId: createdProviders[i]._id.toString()
-                });
-            }
-        }
+    // ══════════════════════════════════════════════════════
+    // 8. ORDERS  (depends on: Users, Inventory)
+    // ══════════════════════════════════════════════════════
+    await OrderModel.insertMany([
+        {
+            userId: john._id,
+            items: [
+                { productId: dogFood._id, productName: "Premium Dog Food (10kg)", quantity: 2, price: 2500 },
+                { productId: dogToys._id, productName: "Interactive Dog Toy Bundle", quantity: 1, price: 650 },
+            ],
+            totalAmount: 5650,
+            status: "delivered",
+            shippingAddress: "123 Main St, Springfield",
+            notes: "Please leave at door",
+        },
+        {
+            userId: sarah._id,
+            items: [
+                { productId: catFood._id, productName: "Cat Food - Fish Delight (5kg)", quantity: 1, price: 1800 },
+                { productId: scratchPost._id, productName: "Cat Scratching Post", quantity: 1, price: 1200 },
+            ],
+            totalAmount: 3000,
+            status: "shipped",
+            shippingAddress: "456 Oak Ave, Springfield",
+            notes: "",
+        },
+        {
+            userId: mike._id,
+            items: [
+                { productId: fleaCollar._id, productName: "Flea & Tick Collar", quantity: 1, price: 800 },
+                { productId: petShampoo._id, productName: "Pet Shampoo - Oatmeal", quantity: 2, price: 350 },
+            ],
+            totalAmount: 1500,
+            status: "confirmed",
+            shippingAddress: "789 Elm Rd, Springfield",
+            notes: "Call before delivery",
+        },
+        {
+            userId: emily._id,
+            items: [
+                { productId: catFood._id, productName: "Cat Food - Fish Delight (5kg)", quantity: 2, price: 1800 },
+            ],
+            totalAmount: 3600,
+            status: "pending",
+            shippingAddress: "321 Pine St, Springfield",
+            notes: "",
+        },
+    ]);
+    console.log("Seeded 4 orders");
 
-        const createdServices = await ServiceModel.insertMany(services);
-        console.log("Seeded services:", createdServices.length);
+    // ══════════════════════════════════════════════════════
+    // 9. REVIEWS  (userId, providerId etc. are STRINGS)
+    // ══════════════════════════════════════════════════════
+    await ReviewModel.insertMany([
+        {
+            rating: 5,
+            comment: "Excellent vet care! Max was treated wonderfully. Dr. Wilson is amazing.",
+            userId: john._id.toString(),
+            providerId: vetProvider._id.toString(),
+            providerServiceId: vetPS._id.toString(),
+            bookingId: bk1._id.toString(),
+            reviewType: "provider",
+        },
+        {
+            rating: 4,
+            comment: "Great vaccination service. Bella was nervous but the staff handled it well.",
+            userId: sarah._id.toString(),
+            providerId: vetProvider._id.toString(),
+            providerServiceId: vetPS._id.toString(),
+            bookingId: bk2._id.toString(),
+            reviewType: "provider",
+        },
+        {
+            rating: 5,
+            comment: "Charlie looks amazing after grooming! Will definitely come back.",
+            userId: mike._id.toString(),
+            providerId: groomerProvider._id.toString(),
+            providerServiceId: groomerPS._id.toString(),
+            bookingId: bk3._id.toString(),
+            reviewType: "provider",
+        },
+        {
+            rating: 4,
+            comment: "Good quality dog food. My dog loves it!",
+            userId: john._id.toString(),
+            productId: dogFood._id.toString(),
+            reviewType: "product",
+        },
+        {
+            rating: 5,
+            comment: "The scratching post is perfect. My cat uses it every day.",
+            userId: sarah._id.toString(),
+            productId: scratchPost._id.toString(),
+            reviewType: "product",
+        },
+    ]);
+    console.log("Seeded 5 reviews");
 
-        // ========== BOOKINGS ==========
-        const statuses = ["pending", "confirmed", "completed", "cancelled", "rejected"] as const;
-        const bookingNotes = [
-            "Please be gentle, pet is nervous",
-            "First time visit",
-            "Allergic to certain shampoos, please use hypoallergenic",
-            "Needs medication at 2pm",
-            "Owner will pick up by 5pm",
-            "Extra playtime requested",
-            "Senior pet, handle with extra care",
-            "Puppy, needs gentle handling",
-            "Regular client, knows the drill",
-            ""
-        ];
+    // ══════════════════════════════════════════════════════
+    // 10. FEEDBACK  (depends on: Providers, Users, Bookings)
+    // ══════════════════════════════════════════════════════
+    await FeedbackModel.insertMany([
+        {
+            feedback: "John was punctual and cooperative during Max's checkup. Great pet owner!",
+            providerId: vetProvider._id,
+            userId: john._id,
+            bookingId: bk1._id,
+        },
+        {
+            feedback: "Sarah took excellent care of Bella before the visit. Pet was well-prepared.",
+            providerId: vetProvider._id,
+            userId: sarah._id,
+            bookingId: bk2._id,
+        },
+        {
+            feedback: "Mike brought Charlie in great condition. Easy grooming session.",
+            providerId: groomerProvider._id,
+            userId: mike._id,
+            bookingId: bk3._id,
+        },
+    ]);
+    console.log("Seeded 3 feedbacks");
 
-        const bookings: any[] = [];
-        // Past bookings (completed/cancelled)
-        for (let i = 0; i < 40; i++) {
-            const userIdx = 1 + (i % 24); // skip admin
-            const serviceIdx = i % createdServices.length;
-            const petIdx = (userIdx - 1) * 2 + (i % 2);
-            const daysAgo = 1 + Math.floor(Math.random() * 60);
-            const hour = 8 + Math.floor(Math.random() * 8);
-            const startDate = new Date();
-            startDate.setDate(startDate.getDate() - daysAgo);
-            startDate.setHours(hour, 0, 0, 0);
-            const endDate = new Date(startDate);
-            endDate.setMinutes(endDate.getMinutes() + createdServices[serviceIdx].duration_minutes);
+    // ══════════════════════════════════════════════════════
+    // 11. HEALTH RECORDS  (petId is STRING)
+    // ══════════════════════════════════════════════════════
+    await HealthRecordModel.insertMany([
+        {
+            recordType: "checkup",
+            title: "Annual Health Checkup",
+            description: "Complete physical exam. Weight: 30kg. Heart rate normal. Lungs clear. Teeth in good condition. All vitals within normal range. Recommended annual boosters.",
+            date: "2025-01-15",
+            nextDueDate: "2026-01-15",
+            attachmentsCount: 0,
+            petId: max._id.toString(),
+        },
+        {
+            recordType: "vaccination",
+            title: "FVRCP & Rabies Vaccination",
+            description: "Administered FVRCP booster (dose 2) and Rabies vaccine (dose 1). Weight: 4.5kg. No adverse reactions observed. Monitor for 24 hours.",
+            date: "2025-01-20",
+            nextDueDate: "2026-01-20",
+            attachmentsCount: 0,
+            petId: bella._id.toString(),
+        },
+        {
+            recordType: "dental",
+            title: "Dental Examination",
+            description: "Dental check performed. Minor tartar buildup on back molars. Recommended dental cleaning in 3 months. No extractions needed at this time.",
+            date: "2025-01-25",
+            nextDueDate: "2025-04-25",
+            attachmentsCount: 0,
+            petId: charlie._id.toString(),
+        },
+        {
+            recordType: "allergy",
+            title: "Allergy Assessment",
+            description: "Chicken allergy confirmed via elimination diet. Switched to fish-based diet. Skin condition improving. Follow up in 2 months.",
+            date: "2025-01-05",
+            nextDueDate: "2025-03-05",
+            attachmentsCount: 0,
+            petId: bella._id.toString(),
+        },
+        {
+            recordType: "checkup",
+            title: "First Kitten Checkup",
+            description: "Initial health screening. Weight: 3.2kg. Healthy development. Started vaccination schedule. Deworming administered.",
+            date: "2025-01-10",
+            nextDueDate: "2025-04-10",
+            attachmentsCount: 0,
+            petId: luna._id.toString(),
+        },
+    ]);
+    console.log("Seeded 5 health records");
 
-            bookings.push({
-                startTime: startDate.toISOString(),
-                endTime: endDate.toISOString(),
-                status: i < 30 ? "completed" : "cancelled",
-                price: createdServices[serviceIdx].price,
-                notes: bookingNotes[Math.floor(Math.random() * bookingNotes.length)],
-                serviceId: createdServices[serviceIdx]._id.toString(),
-                userId: createdUsers[userIdx]._id.toString(),
-                petId: createdPets[petIdx < createdPets.length ? petIdx : 0]._id.toString()
-            });
-        }
+    // ══════════════════════════════════════════════════════
+    // 12. POSTS  (providerId is STRING)
+    // ══════════════════════════════════════════════════════
+    await PostModel.insertMany([
+        {
+            title: "Winter Pet Care Tips",
+            content: "As winter approaches, keep your pets warm and safe. Limit outdoor time in extreme cold. Check paws for ice and salt after walks. Ensure fresh water is always available.",
+            providerId: vetProvider._id.toString(),
+            providerName: "PawCare Vet Clinic",
+            isPublic: true,
+        },
+        {
+            title: "New Arrivals at PawMart!",
+            content: "We just received a fresh batch of premium pet food, organic treats, and eco-friendly toys. Visit us this weekend for special discounts!",
+            providerId: shopProvider._id.toString(),
+            providerName: "PawMart Pet Shop",
+            isPublic: true,
+        },
+        {
+            title: "Grooming Schedule Update",
+            content: "We now accept appointments on Saturdays! Book your pet's grooming session and enjoy our new aromatherapy bath option.",
+            providerId: groomerProvider._id.toString(),
+            providerName: "Happy Paws Grooming",
+            isPublic: true,
+        },
+        {
+            title: "Internal: Staff Meeting Notes",
+            content: "Reminder: monthly team meeting on the 1st. Review new inventory procedures and vaccination protocols.",
+            providerId: vetProvider._id.toString(),
+            providerName: "PawCare Vet Clinic",
+            isPublic: false,
+        },
+    ]);
+    console.log("Seeded 4 posts");
 
-        // Current/upcoming bookings (pending/confirmed)
-        for (let i = 0; i < 25; i++) {
-            const userIdx = 1 + (i % 24);
-            const serviceIdx = (i + 10) % createdServices.length;
-            const petIdx = (userIdx - 1) * 2 + (i % 2);
-            const daysAhead = 1 + Math.floor(Math.random() * 14);
-            const hour = 9 + Math.floor(Math.random() * 7);
-            const startDate = new Date();
-            startDate.setDate(startDate.getDate() + daysAhead);
-            startDate.setHours(hour, 0, 0, 0);
-            const endDate = new Date(startDate);
-            endDate.setMinutes(endDate.getMinutes() + createdServices[serviceIdx].duration_minutes);
+    // ══════════════════════════════════════════════════════
+    // 13. MESSAGES  (depends on: Users)
+    // ══════════════════════════════════════════════════════
+    await MessageModel.insertMany([
+        { content: "When is my next appointment for Max?", userId: john._id },
+        { content: "Can I reschedule Bella's vaccination?", userId: sarah._id },
+        { content: "Do you carry grain-free food for dogs with allergies?", userId: mike._id },
+        { content: "Thank you for the great service!", userId: emily._id },
+    ]);
+    console.log("Seeded 4 messages");
 
-            bookings.push({
-                startTime: startDate.toISOString(),
-                endTime: endDate.toISOString(),
-                status: i < 15 ? "confirmed" : "pending",
-                price: createdServices[serviceIdx].price,
-                notes: bookingNotes[Math.floor(Math.random() * bookingNotes.length)],
-                serviceId: createdServices[serviceIdx]._id.toString(),
-                userId: createdUsers[userIdx]._id.toString(),
-                petId: createdPets[petIdx < createdPets.length ? petIdx : 0]._id.toString()
-            });
-        }
+    // ══════════════════════════════════════════════════════
+    // 14. NOTIFICATIONS  (depends on: Users)
+    // ══════════════════════════════════════════════════════
+    await NotificationModel.insertMany([
+        {
+            userId: john._id,
+            title: "Booking Confirmed",
+            body: "Your checkup appointment for Max on Jan 15 has been confirmed.",
+            type: "booking",
+            isRead: true,
+        },
+        {
+            userId: sarah._id,
+            title: "Vaccination Reminder",
+            body: "Bella's vaccination appointment is scheduled for Jan 20.",
+            type: "booking",
+            isRead: true,
+        },
+        {
+            userId: john._id,
+            title: "Order Delivered",
+            body: "Your order has been delivered successfully.",
+            type: "order",
+            isRead: true,
+        },
+        {
+            userId: mike._id,
+            title: "Grooming Appointment",
+            body: "Your grooming session for Charlie is confirmed for Feb 5.",
+            type: "booking",
+            isRead: false,
+        },
+        {
+            userId: emily._id,
+            title: "Welcome to PawCare!",
+            body: "Thank you for joining PawCare. Explore our services and book your first appointment.",
+            type: "system",
+            isRead: false,
+        },
+    ]);
+    console.log("Seeded 5 notifications");
 
-        const createdBookings = await BookingModel.insertMany(bookings);
-        console.log("Seeded bookings:", createdBookings.length);
+    // ══════════════════════════════════════════════════════
+    // 15. CHAT MESSAGES  (senderId/receiverId are ObjectIds)
+    // ══════════════════════════════════════════════════════
+    await ChatMessageModel.insertMany([
+        {
+            content: "Hi Dr. Wilson, I have a question about Max's diet after the checkup.",
+            senderId: john._id,
+            senderRole: "user",
+            receiverId: vetProvider._id,
+            receiverRole: "provider",
+        },
+        {
+            content: "Hello John! Sure, what would you like to know?",
+            senderId: vetProvider._id,
+            senderRole: "provider",
+            receiverId: john._id,
+            receiverRole: "user",
+        },
+        {
+            content: "Should I switch him to a senior diet? He's turning 4 this year.",
+            senderId: john._id,
+            senderRole: "user",
+            receiverId: vetProvider._id,
+            receiverRole: "provider",
+        },
+        {
+            content: "At 4 years old, a Golden Retriever doesn't need senior food yet. Continue his current adult food.",
+            senderId: vetProvider._id,
+            senderRole: "provider",
+            receiverId: john._id,
+            receiverRole: "user",
+        },
+        {
+            content: "Hi! I'd like to schedule a grooming appointment for my cat.",
+            senderId: sarah._id,
+            senderRole: "user",
+            receiverId: groomerProvider._id,
+            receiverRole: "provider",
+        },
+        {
+            content: "Of course! What breed is your cat? We have special packages for long-haired breeds.",
+            senderId: groomerProvider._id,
+            senderRole: "provider",
+            receiverId: sarah._id,
+            receiverRole: "user",
+        },
+    ]);
+    console.log("Seeded 6 chat messages");
 
-        // ========== REVIEWS ==========
-        const reviewComments = [
-            "Excellent service! My pet loved it.",
-            "Very professional staff. Highly recommended!",
-            "Good experience overall, will come back again.",
-            "The grooming was perfect, my dog looks amazing!",
-            "Friendly team but had to wait a bit longer than expected.",
-            "Outstanding vet care. Dr. was very thorough.",
-            "My cat was so calm after the visit, great handling!",
-            "Fair pricing and wonderful service quality.",
-            "The boarding facility was clean and well-maintained.",
-            "Could improve the waiting area, but service was top-notch.",
-            "My puppy's first visit and they made it so comfortable!",
-            "Best grooming salon in town, no question!",
-            "The vet explained everything clearly, very trustworthy.",
-            "Convenient online booking and prompt service.",
-            "Will definitely return for all our pet care needs.",
-            "Wonderful experience from start to finish!",
-            "Staff was very knowledgeable and caring.",
-            "A bit pricey but worth every penny.",
-            "Quick service without compromising quality.",
-            "Loved the personalized attention to our senior dog."
-        ];
+    // ══════════════════════════════════════════════════════
+    // 16. CARTS  (depends on: Users, Inventory, Providers)
+    // ══════════════════════════════════════════════════════
+    await CartModel.insertMany([
+        {
+            userId: emily._id,
+            items: [
+                { productId: catFood._id, productName: "Cat Food - Fish Delight (5kg)", quantity: 1, price: 1800, providerId: shopProvider._id },
+                { productId: petShampoo._id, productName: "Pet Shampoo - Oatmeal", quantity: 1, price: 350, providerId: shopProvider._id },
+            ],
+        },
+        {
+            userId: mike._id,
+            items: [
+                { productId: dogFood._id, productName: "Premium Dog Food (10kg)", quantity: 1, price: 2500, providerId: shopProvider._id },
+            ],
+        },
+    ]);
+    console.log("Seeded 2 carts");
 
-        const reviews: any[] = [];
-        for (let i = 0; i < 50; i++) {
-            const userIdx = 1 + (i % 24);
-            reviews.push({
-                rating: 3 + Math.floor(Math.random() * 3), // 3-5 stars
-                comment: reviewComments[i % reviewComments.length],
-                userId: createdUsers[userIdx]._id.toString()
-            });
-        }
+    // ══════════════════════════════════════════════════════
+    // Summary
+    // ══════════════════════════════════════════════════════
+    console.log("\n✅ Seed completed successfully!");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("Login credentials (all passwords: Password123!):");
+    console.log("  Admin:     admin@pawcare.com");
+    console.log("  Users:     john@example.com, sarah@example.com, mike@example.com, emily@example.com");
+    console.log("  Providers: vet@pawcareclinic.com, shop@pawmart.com, grooming@happypaws.com");
+    console.log("  (Provider login uses Provider email, not User email)");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-        const createdReviews = await ReviewModel.insertMany(reviews);
-        console.log("Seeded reviews:", createdReviews.length);
-
-        // ========== MESSAGES ==========
-        const messageContents = [
-            "Hi, I'd like to book an appointment for my dog next week.",
-            "Can you confirm my booking for Saturday at 10am?",
-            "What vaccinations does my puppy need at 3 months?",
-            "Thank you for the great service today!",
-            "Is there availability for grooming this Friday?",
-            "My cat has been acting lethargic, should I bring her in?",
-            "Do you offer any package deals for multiple services?",
-            "Just wanted to confirm pickup time for boarding.",
-            "Can I reschedule my appointment from Monday to Wednesday?",
-            "My dog has a skin rash, is this urgent?",
-            "Really appreciate how you handled my anxious pet!",
-            "Do you accept pet insurance?",
-            "What are your operating hours on weekends?",
-            "Can you recommend a good diet for an overweight cat?",
-            "The dental cleaning went great, thank you!",
-            "I need to cancel my appointment for tomorrow.",
-            "Is the vet available for a consultation today?",
-            "My pet's medication is running low, can I get a refill?",
-            "Do you have any openings for emergency visits?",
-            "Thanks for the wonderful boarding experience!"
-        ];
-
-        const messages: any[] = [];
-        for (let i = 0; i < 40; i++) {
-            const userIdx = 1 + (i % 24);
-            messages.push({
-                content: messageContents[i % messageContents.length],
-                userId: createdUsers[userIdx]._id.toString()
-            });
-        }
-
-        const createdMessages = await MessageModel.insertMany(messages);
-        console.log("Seeded messages:", createdMessages.length);
-
-        // ========== HEALTH RECORDS ==========
-        const recordTypes = ["Vaccination", "Checkup", "Surgery", "Dental", "Lab Test", "Medication", "Allergy Test"];
-        const healthRecordTemplates = [
-            { recordType: "Vaccination", title: "Rabies Vaccination", description: "Annual rabies vaccine administered" },
-            { recordType: "Vaccination", title: "DHPP Vaccine", description: "Distemper, hepatitis, parainfluenza, parvovirus combo vaccine" },
-            { recordType: "Vaccination", title: "Bordetella Vaccine", description: "Kennel cough prevention vaccine" },
-            { recordType: "Checkup", title: "Annual Wellness Exam", description: "Full physical examination, weight check, heart and lung auscultation" },
-            { recordType: "Checkup", title: "Puppy Wellness Visit", description: "Growth assessment, parasite check, nutrition counseling" },
-            { recordType: "Dental", title: "Dental Cleaning", description: "Professional dental cleaning under anesthesia, tartar removal" },
-            { recordType: "Surgery", title: "Spay Surgery", description: "Routine ovariohysterectomy performed successfully" },
-            { recordType: "Surgery", title: "Neuter Surgery", description: "Routine castration performed successfully" },
-            { recordType: "Lab Test", title: "Complete Blood Count", description: "CBC panel - all values within normal range" },
-            { recordType: "Lab Test", title: "Urinalysis", description: "Urine analysis for kidney and bladder health assessment" },
-            { recordType: "Medication", title: "Flea & Tick Prevention", description: "Monthly flea and tick preventative administered" },
-            { recordType: "Medication", title: "Heartworm Prevention", description: "Monthly heartworm preventative prescribed" },
-            { recordType: "Allergy Test", title: "Environmental Allergy Panel", description: "Testing for common environmental allergens" },
-            { recordType: "Checkup", title: "Senior Pet Wellness Exam", description: "Comprehensive exam for senior pets including blood work screening" },
-        ];
-
-        const healthRecords: any[] = [];
-        for (let i = 0; i < createdPets.length; i++) {
-            // Each pet gets 2-4 health records
-            const numRecords = 2 + Math.floor(Math.random() * 3);
-            for (let j = 0; j < numRecords; j++) {
-                const template = healthRecordTemplates[(i + j) % healthRecordTemplates.length];
-                const daysAgo = Math.floor(Math.random() * 365);
-                const recordDate = new Date();
-                recordDate.setDate(recordDate.getDate() - daysAgo);
-
-                const nextDueDate = new Date(recordDate);
-                nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
-
-                healthRecords.push({
-                    recordType: template.recordType,
-                    title: template.title,
-                    description: template.description,
-                    date: recordDate.toISOString().split('T')[0],
-                    nextDueDate: template.recordType === "Vaccination" || template.recordType === "Medication"
-                        ? nextDueDate.toISOString().split('T')[0]
-                        : undefined,
-                    attachmentsCount: 0,
-                    petId: createdPets[i]._id.toString()
-                });
-            }
-        }
-
-        const createdHealthRecords = await HealthRecordModel.insertMany(healthRecords);
-        console.log("Seeded health records:", createdHealthRecords.length);
-
-        // ========== ATTACHMENTS ==========
-        const attachmentFileNames = [
-            "lab-report.pdf",
-            "vaccination-card.jpg",
-            "xray-scan.png",
-            "prescription-note.pdf",
-            "bloodwork-results.pdf",
-            "pet-photo.jpg",
-        ];
-
-        const attachments: any[] = [];
-        const attachmentCountByRecord = new Map<string, number>();
-
-        for (let i = 0; i < createdHealthRecords.length; i++) {
-            const record = createdHealthRecords[i];
-            const count = Math.floor(Math.random() * 4); // 0-3 attachments
-            if (count === 0) continue;
-
-            for (let j = 0; j < count; j++) {
-                const fileName = attachmentFileNames[(i + j) % attachmentFileNames.length];
-                attachments.push({
-                    fileName,
-                    fileUrl: `/uploads/dummy/${record._id.toString()}-${j + 1}-${fileName}`,
-                    healthRecordId: record._id.toString(),
-                });
-            }
-
-            attachmentCountByRecord.set(record._id.toString(), count);
-        }
-
-        const createdAttachments = attachments.length
-            ? await AttachmentModel.insertMany(attachments)
-            : [];
-
-        if (attachmentCountByRecord.size > 0) {
-            const bulkOps = Array.from(attachmentCountByRecord.entries()).map(([recordId, count]) => ({
-                updateOne: {
-                    filter: { _id: new mongoose.Types.ObjectId(recordId) },
-                    update: { $set: { attachmentsCount: count } },
-                },
-            }));
-            await HealthRecordModel.bulkWrite(bulkOps);
-        }
-        console.log("Seeded attachments:", createdAttachments.length);
-
-        // ========== FEEDBACK ==========
-        const feedbackTexts = [
-            "Great experience with this provider! Very professional and caring.",
-            "The staff was very friendly and my pet felt comfortable.",
-            "Excellent facilities, very clean and well-organized.",
-            "Would recommend to anyone looking for quality pet care.",
-            "The pricing is fair for the quality of service provided.",
-            "Quick and efficient service, didn't have to wait long.",
-            "My pet was handled with so much care and love.",
-            "The vet was very knowledgeable and explained everything.",
-            "Beautiful grooming results, my dog looks fabulous!",
-            "The boarding area is spacious and comfortable.",
-            "Very attentive to my pet's special dietary needs.",
-            "Online booking system works perfectly, very convenient.",
-            "Staff remembered my pet's name - lovely personal touch!",
-            "Could improve parking availability.",
-            "The follow-up call after the visit was much appreciated.",
-            "Transparent pricing with no hidden fees.",
-            "My nervous cat was handled expertly.",
-            "Clean and modern facility.",
-            "The training sessions really helped with my dog's behavior.",
-            "Highly professional team, will definitely return."
-        ];
-
-        const feedbacks: any[] = [];
-        for (let i = 0; i < createdProviders.length; i++) {
-            // Each provider gets 2-4 feedbacks from random users
-            const numFeedbacks = 2 + Math.floor(Math.random() * 3);
-            for (let j = 0; j < numFeedbacks; j++) {
-                const userIdx = 1 + ((i * 3 + j) % 24);
-                feedbacks.push({
-                    feedback: feedbackTexts[(i + j) % feedbackTexts.length],
-                    providerId: createdProviders[i]._id.toString(),
-                    userId: createdUsers[userIdx]._id.toString()
-                });
-            }
-        }
-
-        const createdFeedbacks = await FeedbackModel.insertMany(feedbacks);
-        console.log("Seeded feedbacks:", createdFeedbacks.length);
-
-        // ========== INVENTORY ==========
-        const inventoryTemplates = [
-            { product_name: "Premium Dog Shampoo", description: "Natural organic shampoo for sensitive skin", price: 18.99, category: "grooming" },
-            { product_name: "Cat Conditioner", description: "Detangling and moisturizing conditioner for cats", price: 15.99, category: "grooming" },
-            { product_name: "Nail Clippers (Small)", description: "Professional grade nail clippers for small pets", price: 12.99, category: "grooming" },
-            { product_name: "Nail Clippers (Large)", description: "Professional grade nail clippers for large dogs", price: 14.99, category: "grooming" },
-            { product_name: "Flea & Tick Shampoo", description: "Medicated shampoo for flea and tick treatment", price: 22.99, category: "medical" },
-            { product_name: "Heartworm Tablets", description: "Monthly heartworm prevention tablets (box of 6)", price: 45.99, category: "medical" },
-            { product_name: "Antibacterial Ear Drops", description: "Veterinary ear cleaning and infection prevention drops", price: 16.99, category: "medical" },
-            { product_name: "Joint Supplements", description: "Glucosamine and chondroitin supplements for joint health", price: 29.99, category: "supplements" },
-            { product_name: "Dental Chews (Pack of 30)", description: "Daily dental chews for fresh breath and clean teeth", price: 24.99, category: "dental" },
-            { product_name: "Premium Dog Food (10kg)", description: "High-quality grain-free dog food", price: 54.99, category: "food" },
-            { product_name: "Premium Cat Food (5kg)", description: "Balanced nutrition cat food with real fish", price: 38.99, category: "food" },
-            { product_name: "Pet Bandages (Roll)", description: "Self-adhesive veterinary bandage roll", price: 8.99, category: "medical" },
-            { product_name: "Deshedding Tool", description: "Professional deshedding grooming tool", price: 19.99, category: "grooming" },
-            { product_name: "Pet Toothbrush Kit", description: "Complete dental hygiene kit for dogs and cats", price: 11.99, category: "dental" },
-            { product_name: "Calming Spray", description: "Natural calming spray for anxious pets", price: 17.99, category: "wellness" },
-            { product_name: "Flea Collar (Dog)", description: "8-month protection flea and tick collar", price: 32.99, category: "medical" },
-            { product_name: "Puppy Training Pads (50 pack)", description: "Super absorbent puppy training pads", price: 21.99, category: "supplies" },
-            { product_name: "Pet Carrier (Medium)", description: "Airline-approved pet carrier for medium pets", price: 49.99, category: "accessories" },
-        ];
-
-        const inventoryItems: any[] = [];
-        for (let i = 0; i < createdProviders.length; i++) {
-            // Each provider gets 4-8 inventory items
-            const numItems = 4 + Math.floor(Math.random() * 5);
-            const shuffled = [...inventoryTemplates].sort(() => Math.random() - 0.5);
-            for (let j = 0; j < numItems; j++) {
-                const template = shuffled[j % shuffled.length];
-                inventoryItems.push({
-                    product_name: template.product_name,
-                    description: template.description,
-                    quantity: 5 + Math.floor(Math.random() * 95), // 5-100 units
-                    price: template.price,
-                    category: template.category,
-                    providerId: createdProviders[i]._id.toString()
-                });
-            }
-        }
-
-        const createdInventory = await InventoryModel.insertMany(inventoryItems);
-        console.log("Seeded inventory items:", createdInventory.length);
-
-        // ========== SUMMARY ==========
-        console.log("\n========================================");
-        console.log("Database seeded successfully!");
-        console.log("========================================");
-        console.log("\nSample login credentials:");
-        console.log("Admin:    admin@pawcare.com / password123");
-        console.log("User:     john.doe@example.com / password123");
-        console.log("Provider: pawcareprovider@gmail.com / zxcvbnm@qwer1234");
-        console.log("Provider: pawfectgrooming@example.com / password123");
-        console.log("\nTotal seeded data:");
-        console.log(`- Users: ${createdUsers.length} (1 admin + 24 regular users)`);
-        console.log(`- Providers: ${createdProviders.length}`);
-        console.log(`  - Provider types: vet=${createdProviders.filter((p: any) => p.providerType === 'vet').length}, shop=${createdProviders.filter((p: any) => p.providerType === 'shop').length}, groomer(babysitter)=${createdProviders.filter((p: any) => p.providerType === 'babysitter').length}`);
-        console.log(`- Pets: ${createdPets.length}`);
-        console.log(`- Services: ${createdServices.length}`);
-        console.log(`- Bookings: ${createdBookings.length} (${bookings.filter(b => b.status === 'completed').length} completed, ${bookings.filter(b => b.status === 'cancelled').length} cancelled, ${bookings.filter(b => b.status === 'rejected').length} rejected, ${bookings.filter(b => b.status === 'confirmed').length} confirmed, ${bookings.filter(b => b.status === 'pending').length} pending)`);
-        console.log(`- Reviews: ${createdReviews.length}`);
-        console.log(`- Messages: ${createdMessages.length}`);
-        console.log(`- Health Records: ${createdHealthRecords.length}`);
-        console.log(`- Attachments: ${createdAttachments.length}`);
-        console.log(`- Feedbacks: ${createdFeedbacks.length}`);
-        console.log(`- Inventory Items: ${createdInventory.length}`);
-
-    } catch (error) {
-        console.error("Error seeding database:", error);
-    } finally {
-        await mongoose.connection.close();
-        console.log("Database connection closed");
-    }
+    await mongoose.disconnect();
 }
 
-// Run the seed function
-seedDatabase();
+seed().catch((err) => {
+    console.error("Seed failed:", err);
+    process.exit(1);
+});

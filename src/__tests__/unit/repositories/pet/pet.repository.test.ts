@@ -76,7 +76,8 @@ describe("PetRepository", () => {
             ];
 
             const mockExec = jest.fn().mockResolvedValue(mockPets);
-            mockPetModel.find = jest.fn().mockReturnValue({ exec: mockExec });
+            const mockPopulate = jest.fn().mockReturnValue({ exec: mockExec });
+            mockPetModel.find = jest.fn().mockReturnValue({ populate: mockPopulate });
 
             const result = await petRepository.getPetsByOwnerId("owner123");
 

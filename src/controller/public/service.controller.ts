@@ -7,7 +7,7 @@ class PublicServiceController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
       const result = await ServiceService.getAllServices(page, limit);
-      return res.json(result);
+      return res.json({ success: true, ...result });
     } catch (err: any) {
       return res.status(err.status || 500).json({ success: false, message: err.message });
     }
@@ -17,7 +17,7 @@ class PublicServiceController {
     try {
       const service = await ServiceService.getServiceById(req.params.id);
       if (!service) return res.status(404).json({ success: false, message: "Service not found" });
-      return res.json(service);
+      return res.json({ success: true, data: service });
     } catch (err: any) {
       return res.status(err.status || 500).json({ success: false, message: err.message });
     }
@@ -30,7 +30,7 @@ class PublicServiceController {
       const limit = parseInt(req.query.limit as string) || 20;
       const { services, total } = await ServiceService.getAllServices(page, limit);
       const filtered = services.filter((s: any) => s.providerId === providerId);
-      return res.json({ services: filtered, total: filtered.length, page, limit, totalPages: Math.ceil(filtered.length / limit) });
+      return res.json({ success: true, services: filtered, total: filtered.length, page, limit, totalPages: Math.ceil(filtered.length / limit) });
     } catch (err: any) {
       return res.status(err.status || 500).json({ success: false, message: err.message });
     }

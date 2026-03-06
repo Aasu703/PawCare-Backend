@@ -10,6 +10,12 @@ router.post("/", authorizedMiddleware, BookingController.create);
 router.post("/create", authorizedMiddleware, BookingController.create);
 router.get("/", authorizedMiddleware, BookingController.list);
 
+// Current user's bookings
+router.get("/my", authorizedMiddleware, (req, res, next) => {
+    req.params.userId = (req as any).user?.id || (req as any).user?._id?.toString();
+    BookingController.listByUser(req, res, next);
+});
+
 // bookings by user (authenticated or admin)
 router.get("/user/:userId", authorizedMiddleware, BookingController.listByUser);
 

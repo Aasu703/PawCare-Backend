@@ -5,11 +5,13 @@ import { ProviderRepository } from "../../repositories/provider/provider.reposit
 import { ChatRepository } from "../../repositories/chat/chat.repository";
 import { emitChatMessage } from "../../realtime/socket-server";
 
-const petRepository = new PetRepository();
-const providerRepository = new ProviderRepository();
-const chatRepository = new ChatRepository();
-
 export class PetService {
+    constructor(
+        private petRepository = new PetRepository(),
+        private providerRepository = new ProviderRepository(),
+        private chatRepository = new ChatRepository()
+    ) {}
+
     private isObjectId(value: string): boolean {
         return /^[a-fA-F0-9]{24}$/.test(value);
     }
@@ -28,14 +30,14 @@ export class PetService {
         if (!ownerId) {
             throw new HttpError(400, "Owner ID is required");
         }
-        return petRepository.createPet(ownerId, data);
+        return this.petRepository.createPet(ownerId, data);
     }
 
     async getPetById(petId: string, ownerId: string, role?: string) {
         if (!petId) {
             throw new HttpError(400, "Pet ID is required");
         }
-        const pet = await petRepository.getPetById(petId);
+        const pet = await this.petRepository.getPetById(petId);
         if (!pet) {
             throw new HttpError(404, "Pet not found");
         }
@@ -49,12 +51,12 @@ export class PetService {
         if (!ownerId) {
             throw new HttpError(400, "Owner ID is required");
         }
-        return petRepository.getPetsByOwnerId(ownerId);
+        return this.petRepository.getPetsByOwnerId(ownerId);
     }
 
     async getAllPets() {
         // Admin method - get all pets from all users
-        return petRepository.getAllPets();
+        return this.petRepository.getAllPets();
     }
 
     async updatePet(petId: string, ownerId: string, data: UpdatePetDto, role?: string) {
@@ -78,7 +80,7 @@ export class PetService {
                     throw new HttpError(400, "Invalid vet id");
                 }
 
-                const vet = await providerRepository.getProviderById(normalizedVetId);
+                const vet = await this.providerRepository.getProviderById(normalizedVetId);
                 if (!vet || vet.providerType !== "vet") {
                     throw new HttpError(404, "Vet provider not found");
                 }
@@ -93,7 +95,7 @@ export class PetService {
             }
         }
 
-        const updated = await petRepository.updatePetById(petId, updates as UpdatePetDto);
+        const updated = await this.petRepository.updatePetById(petId, updates as UpdatePetDto);
         if (!updated) {
             throw new HttpError(404, "Pet not found");
         }
@@ -103,7 +105,7 @@ export class PetService {
         const isAssignmentChanged = prevVet !== nextVet;
         if (isAssignmentChanged && nextVet) {
             const ownerName = (existing as any)?.name || "your pet";
-            const starterMessage = await chatRepository.createMessage({
+            const starterMessage = await this.chatRepository.createMessage({
                 content: `New pet assignment: ${ownerName}. You can ask questions here and share care advice.`,
                 senderId: ownerId,
                 senderRole: "user",
@@ -128,12 +130,12 @@ export class PetService {
             throw new HttpError(400, "Invalid provider id");
         }
 
-        const vet = await providerRepository.getProviderById(vetId);
+        const vet = await this.providerRepository.getProviderById(vetId);
         if (!vet || vet.providerType !== "vet") {
             throw new HttpError(403, "Only vet providers can access assigned pets");
         }
 
-        const pets = await petRepository.getPetsByAssignedVetId(vetId);
+        const pets = await this.petRepository.getPetsByAssignedVetId(vetId);
         return pets.map((pet: any) => {
             const owner = pet?.ownerId;
             const assignedVet = pet?.assignedVetId;
@@ -168,7 +170,7 @@ export class PetService {
         if (!existing) {
             throw new HttpError(404, "Pet not found");
         }
-        const updated = await petRepository.updatePetCareById(petId, data);
+        const updated = await this.petRepository.updatePetCareById(petId, data);
         if (!updated) {
             throw new HttpError(404, "Pet not found");
         }
@@ -180,7 +182,7 @@ export class PetService {
         if (!existing) {
             throw new HttpError(404, "Pet not found");
         }
-        const deleted = await petRepository.deletePetById(petId);
+        const deleted = await this.petRepository.deletePetById(petId);
         if (!deleted) {
             throw new HttpError(404, "Pet not found");
         }
