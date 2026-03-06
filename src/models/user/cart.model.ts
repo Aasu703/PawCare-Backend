@@ -13,7 +13,7 @@ const CartItemSchema: Schema = new Schema(
 
 const CartSchema: Schema = new Schema(
     {
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         items: { type: [CartItemSchema], default: [] },
     },
     { timestamps: true }

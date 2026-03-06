@@ -27,7 +27,7 @@ describe('Order Integration Tests', () => {
     });
 
     afterAll(async () => {
-        await OrderModel.deleteOne({ _id: orderId });
+        await OrderModel.deleteMany({ userId: { $exists: true } }); // Clean up any remaining test orders
         await InventoryModel.deleteOne({ _id: inventoryId });
         await UserModel.deleteOne({ email: testUser.email });
     });
@@ -52,17 +52,34 @@ describe('Order Integration Tests', () => {
         orderId = res.body.data?._id || res.body.data?.id;
     });
     
-    test('GET /api/order/:id should return order; PUT should update; DELETE should remove', async () => {
+    test('GET /api/order/:id should return order; DELETE pending order; cannot cancel confirmed', async () => {
         const get = await request(app).get(`/api/order/${orderId}`).set('Authorization', `Bearer ${token}`);
         expect(get.status).toBe(200);
         expect(get.body).toHaveProperty('data');
 
-        const upd = await request(app).put(`/api/order/${orderId}`).set('Authorization', `Bearer ${token}`).send({ status: 'confirmed' });
-        expect(upd.status).toBe(200);
-        expect(upd.body).toHaveProperty('message', 'Order updated');
-
+        // Can delete while pending
         const del = await request(app).delete(`/api/order/${orderId}`).set('Authorization', `Bearer ${token}`);
         expect(del.status).toBe(200);
-        expect(del.body).toHaveProperty('message', 'Order deleted');
+        expect(del.body).toHaveProperty('message');
+
+        // Create another order to test confirmed status
+        const orderData2 = {
+            items: [{ productId: inventoryId, productName: 'Test Product', quantity: 1, price: 100 }],
+            totalAmount: 100
+        };
+        const res2 = await request(app).post('/api/order').set('Authorization', `Bearer ${token}`).send(orderData2);
+        const orderId2 = res2.body.data?._id || res2.body.data?.id;
+
+        // Update to confirmed
+        const upd = await request(app).put(`/api/order/${orderId2}`).set('Authorization', `Bearer ${token}`).send({ status: 'processing' });
+        expect(upd.status).toBe(200);
+
+        // Cannot delete confirmed order
+        const del2 = await request(app).delete(`/api/order/${orderId2}`).set('Authorization', `Bearer ${token}`);
+        expect(del2.status).toBe(403);
+        expect(del2.body.message).toContain('already being processed');
+
+        // Cleanup
+        await OrderModel.deleteOne({ _id: orderId2 });
     });
 });

@@ -69,7 +69,12 @@ app.use(morgan("dev"));
 
 // Health check route
 app.get('/', (req: Request, res: Response) => {
-    res.status(200).json({ message: 'PawCare API is running!' });
+    res.status(200).json({ success: true, message: 'PawCare API is running!' });
+});
+
+// API root
+app.get('/api', (req: Request, res: Response) => {
+    res.status(200).json({ success: true, message: 'PawCare API' });
 });
 
 // Auth routes
@@ -144,6 +149,11 @@ app.use('/api/attachment', attachmentRoute);
 app.use('/api/feedback', feedbackRoute);
 // Generic upload routes
 app.use('/api/upload', uploadRoute);
+
+// 404 handler - must be after all routes
+app.use((req: Request, res: Response, next: NextFunction) => {
+    return res.status(404).json({ success: false, message: 'Route not found' });
+});
 
 // Request logger middleware
 app.use((req, res, next) => {
