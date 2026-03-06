@@ -55,8 +55,12 @@ export class OrderService {
     }
 
     async deleteOrder(id: string) {
-        const order = await this.orderRepository.deleteOrderById(id);
+        const order = await this.orderRepository.getOrderById(id);
         if (!order) throw new HttpError(404, "Order not found");
+        if (order.status !== "pending") {
+            throw new HttpError(403, "Cannot cancel an order that is already being processed");
+        }
+        await this.orderRepository.deleteOrderById(id);
         return order;
     }
 }

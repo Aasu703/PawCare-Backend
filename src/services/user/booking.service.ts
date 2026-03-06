@@ -78,6 +78,13 @@ export class BookingService {
         return updatedBooking;
     }
     async deleteBooking(bookingId: string){
+        const booking = await this.bookingRepository.getBookingById(bookingId);
+        if(!booking){
+            throw new HttpError(404, "Booking not found");
+        }
+        if (booking.status !== "pending") {
+            throw new HttpError(403, "Cannot cancel a booking that is already being processed");
+        }
         const deletedBooking = await this.bookingRepository.deleteBookingById(bookingId);
         if(!deletedBooking){
             throw new HttpError(404, "Booking not found");
@@ -109,10 +116,25 @@ export class BookingService {
         if (booking.providerId?.toString() !== providerId.toString()) {
             throw new HttpError(403, "Forbidden: not your booking");
         }
-        const validStatuses = ["confirmed", "cancelled", "completed", "pending", "rejected"];
-        if (!validStatuses.includes(status)) {
-            throw new HttpError(400, `Invalid status. Must be one of: ${validStatuses.join(", ")}`);
+
+        const currentStatus = booking.status;
+
+        // Final states — no further transitions allowed
+        if (currentStatus === "completed" || currentStatus === "cancelled") {
+            throw new HttpError(400, `Cannot update a booking that is already ${currentStatus}`);
         }
+
+        // Valid transition map
+        const validTransitions: Record<string, string[]> = {
+            pending: ["confirmed", "cancelled"],
+            confirmed: ["completed", "cancelled"],
+        };
+
+        const allowed = validTransitions[currentStatus as string];
+        if (!allowed || !allowed.includes(status)) {
+            throw new HttpError(400, `Invalid status transition: cannot go from "${currentStatus}" to "${status}"`);
+        }
+
         const updated = await this.bookingRepository.updateBookingById(bookingId, { status } as any);
         if (!updated) {
             throw new HttpError(404, "Booking not found");

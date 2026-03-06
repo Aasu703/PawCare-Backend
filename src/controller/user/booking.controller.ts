@@ -8,7 +8,7 @@ export class BookingController {
         try {
             const userId = (req as any).user?.id || req.body.userId;
             const booking = await bookingService.createBooking(req.body, userId);
-            res.status(201).json(booking);
+            res.status(201).json({ success: true, data: booking });
         } catch (err) { next(err); }
     }
 
@@ -19,7 +19,7 @@ export class BookingController {
                 return res.status(403).json({ success: false, message: "Shop owners cannot access service bookings" });
             }
             const booking = await bookingService.getBookingById(req.params.id);
-            res.json(booking);
+            res.json({ success: true, data: booking });
         } catch (err) { next(err); }
     }
 
@@ -28,21 +28,21 @@ export class BookingController {
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
             const result = await bookingService.getAllBookings(page, limit);
-            res.json(result);
+            res.json({ success: true, data: result });
         } catch (err) { next(err); }
     }
 
     async update(req: Request, res: Response, next: NextFunction) {
         try {
             const updated = await bookingService.updateBooking(req.params.id, req.body);
-            res.json(updated);
+            res.json({ success: true, data: updated });
         } catch (err) { next(err); }
     }
 
     async remove(req: Request, res: Response, next: NextFunction) {
         try {
             const deleted = await bookingService.deleteBooking(req.params.id);
-            res.json({ success: true, deleted });
+            res.json({ success: true, message: "Booking cancelled", data: deleted });
         } catch (err) { next(err); }
     }
 
@@ -52,7 +52,7 @@ export class BookingController {
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
             const result = await bookingService.getBookingsByUserId(userId, page, limit);
-            res.json(result);
+            res.json({ success: true, data: result });
         } catch (err) { 
             console.error('Error in listByUser:', err);
             next(err); 

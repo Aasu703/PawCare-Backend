@@ -4,6 +4,7 @@ import providerServiceRoute from './routes/provider/service.route';
 import providerInventoryRoute from './routes/provider/inventory.route';
 import providerPostRoute from './routes/provider/post.route';
 import providerBookingRoute from './routes/provider/booking.route';
+import providerOrderRoute from './routes/provider/order.route';
 import providerPetRoute from './routes/provider/pet.route';
 import petRouter from "./routes/pet/pet.route";
 import path from 'path';
@@ -19,6 +20,8 @@ import adminPostRoute from './routes/admin/post.route';
 import adminHealthRecordRoute from './routes/admin/healthrecord.route';
 import adminFeedbackRoute from './routes/admin/feedback.route';
 import adminInventoryRoute from './routes/admin/inventory.route';
+import adminOrderRoute from './routes/admin/order.route';
+import adminProviderServiceRoute from './routes/admin/provider-service.route';
 import bookingRoute from './routes/user/booking.route';
 import serviceRoute from './routes/public/service.route';
 import publicPostRoute from './routes/public/post.route';
@@ -79,6 +82,8 @@ app.use('/api/provider/inventory', providerInventoryRoute);
 app.use('/api/provider/booking', providerBookingRoute);
 // Provider post routes
 app.use('/api/provider/post', providerPostRoute);
+// Provider order routes
+app.use('/api/provider/order', providerOrderRoute);
 // Provider pet routes (vet assigned pets)
 app.use('/api/provider/pet', providerPetRoute);
 // Provider routes
@@ -89,6 +94,8 @@ app.use("/api/user/pet", petRouter);
 app.use("/api/admin/users", admiUserRoute);
 // Admin Pet routes
 app.use("/api/admin/pet", adminPetRoute);
+// Admin Provider-Service routes (must be before /api/admin/provider)
+app.use('/api/admin/provider-service', adminProviderServiceRoute);
 // Admin Provider routes
 app.use("/api/admin/provider", adminProviderRoute);
 // Admin Stats routes
@@ -109,6 +116,8 @@ app.use('/api/admin/health-record', adminHealthRecordRoute);
 app.use('/api/admin/feedback', adminFeedbackRoute);
 // Admin Inventory routes
 app.use('/api/admin/inventory', adminInventoryRoute);
+// Admin Order routes
+app.use('/api/admin/order', adminOrderRoute);
 // Booking routes
 app.use('/api/booking', bookingRoute);
 // Order routes

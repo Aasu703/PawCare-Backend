@@ -11,7 +11,7 @@ export const CreateOrderDto = z.object({
 export type CreateOrderDto = z.infer<typeof CreateOrderDto>;
 
 export const UpdateOrderDto = z.object({
-    status: z.enum(["pending", "confirmed", "shipped", "delivered", "cancelled"]).optional(),
+    status: z.enum(["pending", "processing", "confirmed", "shipped", "delivered", "cancelled"]).optional(),
     shippingAddress: z.string().optional(),
     notes: z.string().optional(),
 });
