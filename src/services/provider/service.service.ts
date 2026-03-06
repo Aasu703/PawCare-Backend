@@ -1,53 +1,57 @@
 import { ServiceRepository } from "../../repositories/provider/service.repository";
 import { ServiceType } from "../../types/provider/service.type";
-
-const serviceRepository = new ServiceRepository();
+import { HttpError } from "../../errors/http-error";
 
 export class ServiceService {
+  constructor(private serviceRepository = new ServiceRepository()) {}
+
   async createService(data: ServiceType) {
-    return serviceRepository.createService(data);
+    return this.serviceRepository.createService(data);
   }
 
   async getServiceById(id: string) {
-    const service = await serviceRepository.getServiceById(id);
+    const service = await this.serviceRepository.getServiceById(id);
+    if (!service) throw new HttpError(404, "Service not found");
     return service;
   }
 
   async getAllServices(page = 1, limit = 20) {
-    return serviceRepository.getAllServices(page, limit);
+    return this.serviceRepository.getAllServices(page, limit);
   }
 
   async getServicesByProviderId(providerId: string, page = 1, limit = 20) {
-    return serviceRepository.getServicesByProviderId(providerId, page, limit);
+    return this.serviceRepository.getServicesByProviderId(providerId, page, limit);
   }
 
   async updateService(id: string, updates: Partial<ServiceType>) {
-    const updated = await serviceRepository.updateServiceById(id, updates);
+    const updated = await this.serviceRepository.updateServiceById(id, updates);
+    if (!updated) throw new HttpError(404, "Service not found");
     return updated;
   }
 
   async deleteService(id: string) {
-    const deleted = await serviceRepository.deleteServiceById(id);
+    const deleted = await this.serviceRepository.deleteServiceById(id);
+    if (!deleted) throw new HttpError(404, "Service not found");
     return deleted;
   }
 
   // Provider-scoped operations: ensure service belongs to provider
   async updateServiceForProvider(providerId: string, id: string, updates: Partial<ServiceType>) {
-    const existing = await serviceRepository.getServiceById(id);
-    if (!existing) throw { status: 404, message: 'Service not found' };
+    const existing = await this.serviceRepository.getServiceById(id);
+    if (!existing) throw new HttpError(404, "Service not found");
     if ((existing as any).providerId?.toString() !== providerId.toString()) {
-      throw { status: 403, message: 'Forbidden: not your service' };
+      throw new HttpError(403, "Forbidden: not your service");
     }
-    return serviceRepository.updateServiceById(id, updates);
+    return this.serviceRepository.updateServiceById(id, updates);
   }
 
   async deleteServiceForProvider(providerId: string, id: string) {
-    const existing = await serviceRepository.getServiceById(id);
-    if (!existing) throw { status: 404, message: 'Service not found' };
+    const existing = await this.serviceRepository.getServiceById(id);
+    if (!existing) throw new HttpError(404, "Service not found");
     if ((existing as any).providerId?.toString() !== providerId.toString()) {
-      throw { status: 403, message: 'Forbidden: not your service' };
+      throw new HttpError(403, "Forbidden: not your service");
     }
-    return serviceRepository.deleteServiceById(id);
+    return this.serviceRepository.deleteServiceById(id);
   }
 }
 

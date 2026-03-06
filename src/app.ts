@@ -37,6 +37,7 @@ import orderRoute from './routes/user/order.route';
 import cartRoute from './routes/user/cart.route';
 import { HttpError } from './errors/http-error';
 import morgan from 'morgan';
+import logger from './config/logger';
 
 
 const app: Application = express();
@@ -135,12 +136,12 @@ app.use('/api/feedback', feedbackRoute);
 // Generic upload routes
 app.use('/api/upload', uploadRoute);
 
-// installed a request logger middleware to log incoming requests and their responses. This will help in debugging and monitoring the API usage.
+// Request logger middleware
 app.use((req, res, next) => {
-  console.log("Incoming Request:", req.method, req.url);
+  logger.debug(`${req.method} ${req.url}`);
 
   res.on("finish", () => {
-    console.log("Response Status:", res.statusCode);
+    logger.debug(`Response Status: ${res.statusCode}`);
   });
 
   next();
@@ -149,11 +150,40 @@ app.use((req, res, next) => {
 
 
 
-app.use((err: Error, req: Request, res: Response, next: Function) => {
+app.use((err: any, req: Request, res: Response, next: Function) => {
+    // Known HTTP errors
     if (err instanceof HttpError) {
-        return res.status(err.statusCode).json({ success: false, message: err.message});
+        return res.status(err.statusCode).json({ success: false, message: err.message });
     }
-    return res.status(500).json({ success: false, message:err.message || 'Internal Server Error' });
+
+    // Mongoose validation error
+    if (err.name === "ValidationError" && err.errors) {
+        const messages = Object.values(err.errors).map((e: any) => e.message);
+        return res.status(400).json({ success: false, message: "Validation failed", errors: messages });
+    }
+
+    // MongoDB duplicate-key error (code 11000)
+    if (err.code === 11000) {
+        const field = Object.keys(err.keyPattern || {})[0] || "field";
+        return res.status(409).json({ success: false, message: `Duplicate value for ${field}` });
+    }
+
+    // JWT errors
+    if (err.name === "JsonWebTokenError") {
+        return res.status(401).json({ success: false, message: "Invalid token" });
+    }
+    if (err.name === "TokenExpiredError") {
+        return res.status(401).json({ success: false, message: "Token expired" });
+    }
+
+    // Zod validation error
+    if (err.name === "ZodError" || err.issues) {
+        return res.status(400).json({ success: false, message: "Validation failed", errors: err.issues || err.errors });
+    }
+
+    // Fallback
+    logger.error("Unhandled error:", err);
+    return res.status(500).json({ success: false, message: err.message || "Internal Server Error" });
 });
 
 export default app;

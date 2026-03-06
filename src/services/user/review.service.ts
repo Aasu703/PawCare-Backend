@@ -4,17 +4,19 @@ import { ReviewRepository } from "../../repositories/user/review.repository";
 import { BookingRepository } from "../../repositories/user/booking.repository";
 import ProviderServiceService from "../provider/provider-service.service";
 
-const reviewRepository = new ReviewRepository();
-const bookingRepository = new BookingRepository();
-const providerServiceService = new ProviderServiceService();
-
 export class ReviewService {
+    constructor(
+        private reviewRepository = new ReviewRepository(),
+        private bookingRepository = new BookingRepository(),
+        private providerServiceService = new ProviderServiceService()
+    ) {}
+
     async createReview(data: CreateReviewDto, userId: string) {
         if (!userId) {
             throw new HttpError(400, "User ID is required");
         }
         if (data.bookingId) {
-            const booking = await bookingRepository.getBookingById(data.bookingId);
+            const booking = await this.bookingRepository.getBookingById(data.bookingId);
             if (!booking) {
                 throw new HttpError(404, "Booking not found");
             }
@@ -32,20 +34,20 @@ export class ReviewService {
             if (!data.bookingId) {
                 throw new HttpError(400, "bookingId is required when providerServiceId is provided");
             }
-            const providerService = await providerServiceService.getProviderServiceById(data.providerServiceId);
+            const providerService = await this.providerServiceService.getProviderServiceById(data.providerServiceId);
             if (providerService.verificationStatus !== "approved") {
                 throw new HttpError(403, "Provider service is not approved");
             }
         }
-        const review = await reviewRepository.createReview(data, userId);
+        const review = await this.reviewRepository.createReview(data, userId);
         if (data.providerServiceId) {
-            await providerServiceService.updateRatingForService(data.providerServiceId, data.rating);
+            await this.providerServiceService.updateRatingForService(data.providerServiceId, data.rating);
         }
         return review;
     }
 
     async getReviewById(id: string) {
-        const review = await reviewRepository.getReviewById(id);
+        const review = await this.reviewRepository.getReviewById(id);
         if (!review) {
             throw new HttpError(404, "Review not found");
         }
@@ -53,22 +55,22 @@ export class ReviewService {
     }
 
     async getAllReviews(page: number = 1, limit: number = 10) {
-        return reviewRepository.getAllReviews(page, limit);
+        return this.reviewRepository.getAllReviews(page, limit);
     }
 
     async getReviewsByUserId(userId: string) {
-        return reviewRepository.getReviewsByUserId(userId);
+        return this.reviewRepository.getReviewsByUserId(userId);
     }
 
     async updateReview(id: string, userId: string, data: UpdateReviewDto, role?: string) {
-        const existing = await reviewRepository.getReviewById(id);
+        const existing = await this.reviewRepository.getReviewById(id);
         if (!existing) {
             throw new HttpError(404, "Review not found");
         }
         if (role !== "admin" && existing.userId?.toString() !== userId?.toString()) {
             throw new HttpError(403, "Forbidden");
         }
-        const updated = await reviewRepository.updateReviewById(id, data);
+        const updated = await this.reviewRepository.updateReviewById(id, data);
         if (!updated) {
             throw new HttpError(404, "Review not found");
         }
@@ -76,14 +78,14 @@ export class ReviewService {
     }
 
     async deleteReview(id: string, userId: string, role?: string) {
-        const existing = await reviewRepository.getReviewById(id);
+        const existing = await this.reviewRepository.getReviewById(id);
         if (!existing) {
             throw new HttpError(404, "Review not found");
         }
         if (role !== "admin" && existing.userId?.toString() !== userId?.toString()) {
             throw new HttpError(403, "Forbidden");
         }
-        const deleted = await reviewRepository.deleteReviewById(id);
+        const deleted = await this.reviewRepository.deleteReviewById(id);
         if (!deleted) {
             throw new HttpError(404, "Review not found");
         }
@@ -91,22 +93,22 @@ export class ReviewService {
     }
 
     async getReviewsByProviderId(providerId: string, page: number = 1, limit: number = 10) {
-        return reviewRepository.getReviewsByProviderId(providerId, page, limit);
+        return this.reviewRepository.getReviewsByProviderId(providerId, page, limit);
     }
 
     async getEnrichedReviewsByProviderId(providerId: string, page: number = 1, limit: number = 10) {
-        return reviewRepository.getEnrichedReviewsByProviderId(providerId, page, limit);
+        return this.reviewRepository.getEnrichedReviewsByProviderId(providerId, page, limit);
     }
 
     async getRatingBreakdownByProviderId(providerId: string) {
-        return reviewRepository.getRatingBreakdownByProviderId(providerId);
+        return this.reviewRepository.getRatingBreakdownByProviderId(providerId);
     }
 
     async getReviewsByProductId(productId: string, page: number = 1, limit: number = 10) {
-        return reviewRepository.getReviewsByProductId(productId, page, limit);
+        return this.reviewRepository.getReviewsByProductId(productId, page, limit);
     }
 
     async getAverageRatingByProviderId(providerId: string) {
-        return reviewRepository.getAverageRatingByProviderId(providerId);
+        return this.reviewRepository.getAverageRatingByProviderId(providerId);
     }
 }

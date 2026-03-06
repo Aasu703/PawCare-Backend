@@ -21,9 +21,11 @@ export interface DashboardStats {
 }
 
 export class AdminStatsService {
-  private userRepository = new UserRepository();
-  private petRepository = new PetRepository();
-  private providerRepository = new ProviderRepository();
+  constructor(
+    private userRepository = new UserRepository(),
+    private petRepository = new PetRepository(),
+    private providerRepository = new ProviderRepository()
+  ) {}
 
   async getDashboardStats(): Promise<DashboardStats> {
     try {

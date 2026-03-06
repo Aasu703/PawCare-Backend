@@ -5,7 +5,6 @@ import jwt from "jsonwebtoken";
 import {  JWT_SECRET } from "../../config";
 import { ProviderRepository } from "../../repositories/provider/provider.repository";
 
-const providerRepository = new ProviderRepository();
 type ProviderKind = "shop" | "vet" | "babysitter";
 type ProviderLocationInput = {
     latitude: number;
@@ -15,6 +14,8 @@ type ProviderLocationInput = {
 type VerifiedLocationProviderType = "shop" | "vet";
 
 export class ProviderService {
+    constructor(private providerRepository = new ProviderRepository()) {}
+
     private sanitizeProvider(provider: Record<string, any>) {
         const plain = typeof provider.toObject === "function" ? provider.toObject() : provider;
         const { password, ...safeProvider } = plain;
@@ -32,7 +33,7 @@ export class ProviderService {
     }
 
     async createProvider(data: CreateProviderDTO) {
-        const emailCheck = await providerRepository.getProviderByEmail(data.email);
+        const emailCheck = await this.providerRepository.getProviderByEmail(data.email);
         if (emailCheck) {
             throw new HttpError(403, "Email is already in use");
         }
@@ -40,7 +41,7 @@ export class ProviderService {
         const hashedPassword = await bcryptjs.hash(data.password, 10);
         data.password = hashedPassword;
 
-        const newProvider = await providerRepository.createProvider(data);
+        const newProvider = await this.providerRepository.createProvider(data);
         
         // Generate token for the newly registered provider
         const payload = {
@@ -57,7 +58,7 @@ export class ProviderService {
     }
 
     async loginProvider(data: LoginProviderDTO) {
-        const provider = await providerRepository.getProviderByEmail(data.email);
+        const provider = await this.providerRepository.getProviderByEmail(data.email);
         if (!provider) {
             throw new HttpError(404, "Provider not found");
         }
@@ -81,7 +82,7 @@ export class ProviderService {
     }
 
     async getProviderById(id: string) {
-        const provider = await providerRepository.getProviderById(id);
+        const provider = await this.providerRepository.getProviderById(id);
         if (!provider) {
             throw new HttpError(404, "Provider not found");
         }
@@ -93,11 +94,11 @@ export class ProviderService {
         status?: string;
         pawcareVerified?: boolean;
     }) {
-        return providerRepository.getAllProviders(filters);
+        return this.providerRepository.getAllProviders(filters);
     }
 
     async updateProvider(id: string, updates: Record<string, any>) {
-        const provider = await providerRepository.updateProviderById(id, updates);
+        const provider = await this.providerRepository.updateProviderById(id, updates);
         if (!provider) {
             throw new HttpError(404, "Provider not found");
         }
@@ -105,7 +106,7 @@ export class ProviderService {
     }
 
     async deleteProvider(id: string) {
-        const provider = await providerRepository.deleteProviderById(id);
+        const provider = await this.providerRepository.deleteProviderById(id);
         if (!provider) {
             throw new HttpError(404, "Provider not found");
         }
@@ -164,7 +165,7 @@ export class ProviderService {
             updates.pawcareVerified = false;
         }
 
-        const provider = await providerRepository.updateProviderById(id, updates);
+        const provider = await this.providerRepository.updateProviderById(id, updates);
         if (!provider) {
             throw new HttpError(404, "Provider not found");
         }
@@ -172,7 +173,7 @@ export class ProviderService {
     }
 
     async getProviderProfile(id: string) {
-        const provider = await providerRepository.getProviderById(id);
+        const provider = await this.providerRepository.getProviderById(id);
         if (!provider) {
             throw new HttpError(404, "Provider not found");
         }
@@ -180,7 +181,7 @@ export class ProviderService {
     }
 
     async updateProviderProfile(id: string, updates: Record<string, any>) {
-        const provider = await providerRepository.updateProviderById(id, updates);
+        const provider = await this.providerRepository.updateProviderById(id, updates);
         if (!provider) {
             throw new HttpError(404, "Provider not found");
         }
@@ -188,7 +189,7 @@ export class ProviderService {
     }
 
     async approveProvider(id: string, adminId?: string) {
-        const current = await providerRepository.getProviderById(id);
+        const current = await this.providerRepository.getProviderById(id);
         if (!current) {
             throw new HttpError(404, "Provider not found");
         }
@@ -217,7 +218,7 @@ export class ProviderService {
             updates.pawcareVerified = false;
         }
 
-        const provider = await providerRepository.updateProviderById(id, updates);
+        const provider = await this.providerRepository.updateProviderById(id, updates);
         if (!provider) {
             throw new HttpError(404, "Provider not found");
         }
@@ -225,7 +226,7 @@ export class ProviderService {
     }
 
     async rejectProvider(id: string) {
-        const provider = await providerRepository.updateProviderById(id, {
+        const provider = await this.providerRepository.updateProviderById(id, {
             status: "rejected",
             locationVerified: false,
             locationVerifiedAt: null,
@@ -239,18 +240,18 @@ export class ProviderService {
     }
 
     async getProvidersByType(providerType: string) {
-        return providerRepository.getProvidersByType(providerType);
+        return this.providerRepository.getProvidersByType(providerType);
     }
 
     async getProvidersByStatus(status: string) {
-        return providerRepository.getProvidersByStatus(status);
+        return this.providerRepository.getProvidersByStatus(status);
     }
 
     async getVerifiedProviderLocations(providerType?: string) {
         const normalizedType: VerifiedLocationProviderType | undefined =
             providerType === "shop" || providerType === "vet" ? providerType : undefined;
 
-        const providers = await providerRepository.getVerifiedProvidersWithLocation(normalizedType);
+        const providers = await this.providerRepository.getVerifiedProvidersWithLocation(normalizedType);
         return providers
             .filter((provider: any) => {
                 const latitude = Number(provider?.location?.latitude);
