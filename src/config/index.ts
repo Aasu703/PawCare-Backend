@@ -15,6 +15,9 @@ const envSchema = z.object({
 	CLIENT_URL: z.string().optional().default("http://localhost:3000"),
 	EMAIL_USER: z.string().optional().default(""),
 	EMAIL_PASS: z.string().optional().default(""),
+	TWILIO_ACCOUNT_SID: z.string().optional().default(""),
+	TWILIO_AUTH_TOKEN: z.string().optional().default(""),
+	TWILIO_FROM_NUMBER: z.string().optional().default("")
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -33,3 +36,6 @@ export const NODE_ENV: string = env.NODE_ENV;
 export const CLIENT_URL: string = env.CLIENT_URL;
 export const EMAIL_USER: string = env.EMAIL_USER;
 export const EMAIL_PASS: string = env.EMAIL_PASS;
+export const TWILIO_ACCOUNT_SID: string = env.TWILIO_ACCOUNT_SID;
+export const TWILIO_AUTH_TOKEN: string = env.TWILIO_AUTH_TOKEN;
+export const TWILIO_FROM_NUMBER: string = env.TWILIO_FROM_NUMBER;

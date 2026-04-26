@@ -24,5 +24,7 @@ router.put(
 
 router.post("/request-password-reset", asyncHandler((req, res) => authController.sendResetPasswordEmail(req, res)));
 router.post("/reset-password/:token", asyncHandler((req, res) => authController.resetPassword(req, res)));
+router.post("/request-password-reset-otp", asyncHandler((req, res) => authController.sendResetPasswordOtp(req, res)));
+router.post("/reset-password-otp", asyncHandler((req, res) => authController.resetPasswordWithOtp(req, res)));
 
 export default router;
