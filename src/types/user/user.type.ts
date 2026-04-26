@@ -10,7 +10,10 @@ export const UserSchema = z.object({
     role: z.enum(["user", "admin", "provider"]).default("user"),
     imageUrl: z.string().optional(), // for image URL storage
     avatarUrl: z.string().optional(),
-    createdAt: z.string().optional()
+    createdAt: z.string().optional(),
+    resetOtp: z.string().optional(),
+    resetOtpExpiresAt: z.union([z.string(), z.date()]).optional(),
+    resetOtpAttempts: z.number().optional()
 
 });
 

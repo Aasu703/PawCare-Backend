@@ -129,7 +129,18 @@ export class AuthController {
     }
     async sendResetPasswordEmail(req: Request, res: Response) {
         try {
-            const email = req.body.email;
+            const { email, phone, channel } = req.body;
+            const wantsOtp = channel === 'mobile' || channel === 'sms' || (!!phone && phone.trim().length > 0);
+
+            if (wantsOtp) {
+                const result = await userService.sendResetPasswordOtp(phone, email);
+                return res.status(200).json({
+                    success: true,
+                    data: result,
+                    message: "If the phone is registered, an OTP has been sent.",
+                });
+            }
+
             const user = await userService.sendResetPasswordEmail(email);
             return res.status(200).json(
                 { success: true,
@@ -143,12 +154,42 @@ export class AuthController {
         }
     }
 
+    async sendResetPasswordOtp(req: Request, res: Response) {
+        try {
+            const phone = req.body.phone;
+            const result = await userService.sendResetPasswordOtp(phone);
+            return res.status(200).json({
+                success: true,
+                data: result,
+                message: "If the phone is registered, an OTP has been sent.",
+            });
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json(
+                { success: false, message: error.message || "Internal Server Error" }
+            );
+        }
+    }
+
     async resetPassword(req: Request, res: Response) {
         try {
 
            const token = req.params.token;
             const { newPassword } = req.body;
             await userService.resetPassword(token, newPassword);
+            return res.status(200).json(
+                { success: true, message: "Password has been reset successfully." }
+            );
+        } catch (error: Error | any) {
+            return res.status(error.statusCode ?? 500).json(
+                { success: false, message: error.message || "Internal Server Error" }
+            );
+        }
+    }
+
+    async resetPasswordWithOtp(req: Request, res: Response) {
+        try {
+            const { phone, otp, newPassword } = req.body;
+            await userService.resetPasswordWithOtp(phone, otp, newPassword);
             return res.status(200).json(
                 { success: true, message: "Password has been reset successfully." }
             );

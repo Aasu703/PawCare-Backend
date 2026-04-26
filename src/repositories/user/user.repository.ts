@@ -18,6 +18,10 @@ export class UserRepository {
         return UserModel.findOne({ email }).exec();
     }
 
+    async getUserByPhone(phone: string): Promise<IUser | null> {
+        return UserModel.findOne({ phone }).exec();
+    }
+
     async getUserByFullName(fullName: string): Promise<IUser | null> {
         return UserModel.findOne({ fullName }).exec();
     }
@@ -38,7 +42,14 @@ export class UserRepository {
         return UserModel.findById(id).exec();
     }
 
-    async updateUserById(id: string, updates: Partial<Pick<IUser, "email" | "password" | "Firstname" | "Lastname" | "phone" | "role" | "imageUrl">>): Promise<IUser | null> {
+    async updateUserById(
+        id: string,
+        updates: Partial<Pick<IUser,
+            "email" | "password" | "Firstname" | "Lastname" |
+            "phone" | "role" | "imageUrl" | "resetOtp" |
+            "resetOtpExpiresAt" | "resetOtpAttempts">
+        >,
+    ): Promise<IUser | null> {
         return UserModel.findByIdAndUpdate(id, updates, { new: true }).exec();
     }
 

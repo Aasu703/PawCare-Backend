@@ -108,6 +108,34 @@ export class UserService {
 
     }
 
+    async sendResetPasswordOtp(phone?: string, email?: string) {
+        if (!phone && !email) {
+            throw new HttpError(400, "Phone or email is required");
+        }
+
+        const user = phone
+            ? await this.userRepository.getUserByPhone(phone)
+            : await this.userRepository.getUserByEmail(email!);
+
+        if (!user) {
+            throw new HttpError(404, "User not found");
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        await this.userRepository.updateUserById(user._id.toString(), {
+            resetOtp: otp,
+            resetOtpExpiresAt: expiresAt,
+            resetOtpAttempts: 0,
+        });
+
+        const html = `<p>Your PawCare reset code is <strong>${otp}</strong>. It expires in 10 minutes.</p>`;
+        await sendEmail(user.email, "Password Reset Code", html);
+
+        return { phone: user.phone, email: user.email, expiresAt };
+    }
+
     async resetPassword(token?: string, newPassword?: string) {
         try {
             if (!token || !newPassword) {
@@ -125,6 +153,38 @@ export class UserService {
         } catch (error) {
             throw new HttpError(400, "Invalid or expired token");
         }
+    }
+
+    async resetPasswordWithOtp(phone?: string, otp?: string, newPassword?: string) {
+        if (!phone || !otp || !newPassword) {
+            throw new HttpError(400, "Phone, OTP, and new password are required");
+        }
+
+        const user = await this.userRepository.getUserByPhone(phone);
+        if (!user) {
+            throw new HttpError(404, "User not found");
+        }
+
+        const expiresAt = user.resetOtpExpiresAt ? new Date(user.resetOtpExpiresAt) : null;
+        const isExpired = !expiresAt || expiresAt.getTime() < Date.now();
+        const isMismatch = !user.resetOtp || user.resetOtp !== otp;
+
+        if (isExpired || isMismatch) {
+            await this.userRepository.updateUserById(user._id.toString(), {
+                resetOtp: undefined,
+                resetOtpExpiresAt: undefined,
+            });
+            throw new HttpError(400, "Invalid or expired OTP");
+        }
+
+        const hashedPassword = await bcryptjs.hash(newPassword, 10);
+        await this.userRepository.updateUserById(user._id.toString(), {
+            password: hashedPassword,
+            resetOtp: undefined,
+            resetOtpExpiresAt: undefined,
+            resetOtpAttempts: 0,
+        });
+        return this.sanitizeUser(user as unknown as Record<string, any>);
     }
 
 }
